@@ -156,20 +156,6 @@ export default function RegisterPage() {
               zIndex: 2000,
             }}
           >
-            {/* Road */}
-            <View style={{ flex: 1 }}>
-              <Text style={labelStyle}>Road</Text>
-
-              <TextInput
-                value={form.road}
-                onChangeText={(value) => handleChange("road", value)}
-                placeholder="e.g. 10"
-                placeholderTextColor="#999"
-                keyboardType="numeric"
-                style={inputStyle}
-              />
-            </View>
-
             {/* Avenue */}
             <View
               style={{
@@ -215,6 +201,20 @@ export default function RegisterPage() {
                 }}
                 zIndex={2000}
                 zIndexInverse={2000}
+              />
+            </View>
+            
+            {/* Road */}
+            <View style={{ flex: 1 }}>
+              <Text style={labelStyle}>Road</Text>
+
+              <TextInput
+                value={form.road}
+                onChangeText={(value) => handleChange("road", value)}
+                placeholder="e.g. 10"
+                placeholderTextColor="#999"
+                keyboardType="numeric"
+                style={inputStyle}
               />
             </View>
           </View>
