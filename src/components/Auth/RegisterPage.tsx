@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import DropDownPicker from "react-native-dropdown-picker";
 import { router } from "expo-router";
+import { useUserRegisterMutation } from "@/store/auth";
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
@@ -23,10 +24,12 @@ export default function RegisterPage() {
     flat: "",
   });
 
+  const [userRegister] = useUserRegisterMutation();
+
   // Area dropdown
   const [areaOpen, setAreaOpen] = useState(false);
   const [areaItems, setAreaItems] = useState([
-    { label: "Mirpur", value: "mirpur" },
+    { label: "Mirpur", value: "mirpurdosh" },
     { label: "Dhanmondi", value: "dhanmondi" },
     { label: "Uttara", value: "uttara" },
     { label: "Mohammadpur", value: "mohammadpur" },
@@ -51,7 +54,18 @@ export default function RegisterPage() {
 
   const handleRegister = () => {
     console.log("Registration Data:", form);
-    router.push({ pathname: "/otp-verify", params: { phone: form.phone } });
+    userRegister(form)
+    .unwrap()
+    .then((res) => {
+      if(res?.status_code === 201 || res?.success){
+        router.push({ pathname: "/otp-verify", params: { phone: form.phone } });
+      }
+      console.log("Registration Response:", res);
+    })
+    .catch((err) => {
+      console.error("Registration Error:", err);
+      // Handle error (e.g., show a toast or alert)
+    });
   };
 
   return (
@@ -203,7 +217,7 @@ export default function RegisterPage() {
                 zIndexInverse={2000}
               />
             </View>
-            
+
             {/* Road */}
             <View style={{ flex: 1 }}>
               <Text style={labelStyle}>Road</Text>
