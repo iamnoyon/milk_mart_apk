@@ -7,11 +7,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   View,
+  Alert,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import DropDownPicker from "react-native-dropdown-picker";
 import { router } from "expo-router";
 import { useUserRegisterMutation } from "@/store/auth";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
@@ -24,7 +26,7 @@ export default function RegisterPage() {
     flat: "",
   });
 
-  const [userRegister] = useUserRegisterMutation();
+  const [userRegister, { isLoading }] = useUserRegisterMutation();
 
   // Area dropdown
   const [areaOpen, setAreaOpen] = useState(false);
@@ -52,20 +54,78 @@ export default function RegisterPage() {
     }));
   };
 
-  const handleRegister = () => {
+  /**
+   * Handle phone number input.
+   *
+   * Rules:
+   * - Only numbers are allowed
+   * - Maximum 11 digits
+   */
+  const handlePhoneChange = (value: string) => {
+    // Remove anything that is not a number
+    const digitsOnly = value.replace(/\D/g, "");
+
+    // Don't allow more than 11 digits
+    if (digitsOnly.length <= 11) {
+      handleChange("phone", digitsOnly);
+    }
+  };
+
+  /**
+   * Validate registration form
+   */
+  const validateForm = () => {
+    // Phone validation
+    if (!form.phone) {
+      Alert.alert("Validation Error", "Please enter your phone number.");
+      return false;
+    }
+
+    if (!/^01\d{9}$/.test(form.phone)) {
+      Alert.alert(
+        "Invalid Phone Number",
+        "Phone number must be exactly 11 digits and start with 01.\n\nExample: 01889010237"
+      );
+      return false;
+    }
+
+    return true;
+  };
+
+  /**
+   * Register user
+   */
+  const handleRegister = async () => {
+    // Validate before calling API
+    if (!validateForm()) {
+      return;
+    }
+
     console.log("Registration Data:", form);
-    userRegister(form)
-    .unwrap()
-    .then((res) => {
-      if(res?.status_code === 201 || res?.success){
-        router.push({ pathname: "/otp-verify", params: { phone: form.phone } });
-      }
+
+    try {
+      const res = await userRegister(form).unwrap();
+
       console.log("Registration Response:", res);
-    })
-    .catch((err) => {
-      console.error("Registration Error:", err);
-      // Handle error (e.g., show a toast or alert)
-    });
+
+      if (res?.status_code === 201 || res?.success) {
+        router.push({
+          pathname: "/otp-verify",
+          params: {
+            phone: form.phone,
+          },
+        });
+      } else {
+       
+      }
+    } catch (err: any) {
+      console.log(err)
+       Toast.show({
+          type: 'error',
+          text1: 'Registration failed!',
+          text2: err.data.detail
+        })
+    }
   };
 
   return (
@@ -112,17 +172,30 @@ export default function RegisterPage() {
           />
 
           {/* Phone */}
-          <Text style={labelStyle}>Phone Number</Text>
+          <Text style={labelStyle}>Phone Number <Text style={{ color: "red" }}>*</Text></Text>
 
           <TextInput
             value={form.phone}
-            onChangeText={(value) => handleChange("phone", value)}
+            onChangeText={handlePhoneChange}
             placeholder="01889010237"
             placeholderTextColor="#999"
             keyboardType="phone-pad"
             autoComplete="tel"
+            maxLength={11}
             style={inputStyle}
           />
+
+          {/* Phone helper text */}
+          <Text
+            style={{
+              fontSize: 12,
+              color: "#777",
+              marginTop: -8,
+              marginBottom: 14,
+            }}
+          >
+            Enter an 11-digit mobile number starting with 01
+          </Text>
 
           {/* Area */}
           <Text style={labelStyle}>Area</Text>
@@ -237,7 +310,8 @@ export default function RegisterPage() {
           <View
             style={{
               flexDirection: "row",
-              gap: 12,            }}
+              gap: 12,
+            }}
           >
             {/* House */}
             <View style={{ flex: 1 }}>
@@ -270,6 +344,7 @@ export default function RegisterPage() {
           {/* Register */}
           <Pressable
             onPress={handleRegister}
+            disabled={isLoading}
             style={({ pressed }) => ({
               height: 55,
               marginTop: 10,
@@ -278,7 +353,7 @@ export default function RegisterPage() {
               backgroundColor: pressed ? "#82A83A" : "#6E9620",
               justifyContent: "center",
               alignItems: "center",
-              opacity: pressed ? 0.9 : 1,
+              opacity: pressed || isLoading ? 0.7 : 1,
             })}
           >
             <Text
@@ -288,7 +363,7 @@ export default function RegisterPage() {
                 fontWeight: "600",
               }}
             >
-              Create Account
+              {isLoading ? "Creating Account..." : "Create Account"}
             </Text>
           </Pressable>
 

@@ -1,4 +1,7 @@
+import { useUserLoginOTPVerifyMutation } from "@/store/auth";
+import { saveToken } from "@/utils/authStorage";
 import { Image } from "expo-image";
+import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Text,
@@ -10,6 +13,7 @@ import {
   ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 
 interface VerifyOtpPageProps {
     phone?: string;
@@ -24,6 +28,9 @@ export default function VerifyOtpPage({
 }: VerifyOtpPageProps) {
     const [otp, setOtp] = useState(["", "", "", "", ""]);
     const [resendTimer, setResendTimer] = useState(120);
+
+    // API
+    const [Login, {data: loginRes}] = useUserLoginOTPVerifyMutation();
 
     const inputRefs = useRef<(TextInput | null)[]>([]);
 
@@ -64,12 +71,25 @@ export default function VerifyOtpPage({
     const handleVerify = () => {
         const otpValue = otp.join("");
 
-        if (otpValue.length !== 5) {
-            return;
-        }
-
-        console.log("OTP:", otpValue, phone);
-
+        Login({ phone, otp: otpValue })
+        .unwrap()
+        .then(async (res) => {
+            console.log("OTP verification successful:", res);
+            if(res?.status_code === 200 || res?.success) {
+                await saveToken(res?.token);
+                router.push("/home");
+            }
+            onVerify?.(otpValue);
+        })
+        .catch((error) => {
+            Toast.show({
+                type: 'error',
+                text1: 'Faild OTP verification!',
+                text2: error?.data?.detail
+            })
+            console.log("OTP verification failed:", error);
+            // Handle error (e.g., show a message to the user)
+        });
         onVerify?.(otpValue);
     };
 

@@ -1,4 +1,4 @@
-import VerifyOtpPage from "@/components/Auth/VerifyOTP";
+import VerifyOtpPage from "@/components/Auth/LoginOTPVerify";
 import { useLocalSearchParams } from "expo-router";
 
 export default function VerifyOTP() {

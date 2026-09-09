@@ -1,0 +1,25 @@
+import React from 'react'
+import { Text } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+
+export default function HomePage() {
+    return (
+        <SafeAreaView
+            style={{
+                flex: 1,
+                backgroundColor: "#FEFEFE",
+            }}
+        >
+            <Text
+                style={{
+                    fontSize: 24,
+                    fontWeight: "bold",
+                    textAlign: "center",
+                    marginTop: 20,
+                }}
+            >
+                Welcome to the Home Page!
+            </Text>
+        </SafeAreaView>
+    )
+}
