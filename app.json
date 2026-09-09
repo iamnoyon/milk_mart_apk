@@ -1,12 +1,11 @@
 {
   "expo": {
     "name": "MilkMart",
-    "slug": "milkmart",
+    "slug": "myapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "milkmart",
-    "userInterfaceStyle": "automatic",
 
     "ios": {
       "icon": "./assets/expo.icon"
@@ -20,7 +19,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.superman674.milkmart"
+      "package": "com.superman674.myapp"
     },
 
     "web": {
