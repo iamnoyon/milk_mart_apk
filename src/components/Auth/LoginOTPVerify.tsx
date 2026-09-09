@@ -30,7 +30,7 @@ export default function VerifyOtpPage({
     const [resendTimer, setResendTimer] = useState(120);
 
     // API
-    const [Login, {data: loginRes}] = useUserLoginOTPVerifyMutation();
+    const [Login, {data: loginRes, isLoading}] = useUserLoginOTPVerifyMutation();
 
     const inputRefs = useRef<(TextInput | null)[]>([]);
 
@@ -231,11 +231,11 @@ export default function VerifyOtpPage({
                     {/* Verify Button */}
                     <Pressable
                         onPress={handleVerify}
-                        disabled={!isComplete}
+                        disabled={!isComplete || isLoading}
                         style={({ pressed }) => ({
                             height: 55,
                             borderRadius: 10,
-                            backgroundColor: !isComplete
+                            backgroundColor: !isComplete || isLoading
                                 ? "#C8D5A8"
                                 : pressed
                                     ? "#82A83A"
@@ -252,7 +252,7 @@ export default function VerifyOtpPage({
                                 fontWeight: "600",
                             }}
                         >
-                            Verify OTP
+                            {isLoading ? "Verifying..." : "Verify OTP"}
                         </Text>
                     </Pressable>
 

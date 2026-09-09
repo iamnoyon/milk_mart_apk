@@ -9,7 +9,7 @@ import Toast from "react-native-toast-message";
 export default function LoginPage() {
     const [phone, setPhone] = useState("");
 
-    const [ResendOTP] = useResendOTPForRegisterdUserToLoginMutation()
+    const [ResendOTP, {isLoading}] = useResendOTPForRegisterdUserToLoginMutation()
 
     const handlePhoneChange = (value: string) => {
         const digitsOnly = value.replace(/\D/g, "");
@@ -129,7 +129,7 @@ export default function LoginPage() {
                     {/* Send OTP Button */}
                     <Pressable
                         onPress={handleSendOTP}
-                        disabled={phone.length !== 11}
+                        disabled={phone.length !== 11 || isLoading}
                         style={({ pressed }) => ({
                             height: 55,
 
@@ -138,7 +138,7 @@ export default function LoginPage() {
                             backgroundColor: pressed ? "#82A83A" : "#6E9620",
                             justifyContent: "center",
                             alignItems: "center",
-                            opacity: pressed || phone.length !== 11 ? 0.5 : 1
+                            opacity: pressed || phone.length !== 11 || isLoading ? 0.5 : 1
                         })}
                     >
                         <Text
@@ -148,7 +148,7 @@ export default function LoginPage() {
                                 fontWeight: "600",
                             }}
                         >
-                            Send OTP
+                            {isLoading ? "Sending OTP..." : "Send OTP"}
                         </Text>
                     </Pressable>
                 </ScrollView>

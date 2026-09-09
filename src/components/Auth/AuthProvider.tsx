@@ -1,8 +1,7 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
 import * as SecureStore from "expo-secure-store";
 import { useDispatch } from "react-redux";
-import { setToken, setUser } from "@/store/user";
-import { apiSlice } from "@/store/apiSlice";
+import { setToken, setUser, clearToken, clearUser } from "@/store/user";
 
 const TOKEN_KEY = "access_token";
 
@@ -11,11 +10,13 @@ const API_URL = "https://fmd-6pes.onrender.com";
 interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   isLoading: true,
+  logout: async () => {},
 });
 
 export function useAuth() {
@@ -71,8 +72,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkAuth();
   }, []);
 
+  const logout = useCallback(async () => {
+    await SecureStore.deleteItemAsync(TOKEN_KEY);
+    dispatch(clearToken());
+    dispatch(clearUser());
+    setIsAuthenticated(false);
+  }, [dispatch]);
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, logout }}>
       {children}
     </AuthContext.Provider>
   );
