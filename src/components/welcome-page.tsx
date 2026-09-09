@@ -17,7 +17,7 @@ export class WelcomePage extends Component {
           }}
         >
           <Image
-            source={require("@/assets/images/welcome.jpeg")}
+            source={require("@/assets/images/welcome.webp")}
             style={{
               width: 300,
               height: 300,

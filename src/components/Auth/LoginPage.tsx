@@ -75,7 +75,7 @@ export default function LoginPage() {
                 >
                     <View style={{ alignItems: "center", marginBottom: 30 }}>
                         <Image
-                            source={require("@/assets/images/welcome.jpeg")}
+                            source={require("@/assets/images/welcome.webp")}
                             style={{
                                 width: 200,
                                 height: 200,
