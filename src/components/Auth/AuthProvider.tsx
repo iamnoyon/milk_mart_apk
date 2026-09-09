@@ -6,7 +6,7 @@ import { apiSlice } from "@/store/apiSlice";
 
 const TOKEN_KEY = "access_token";
 
-const API_URL = "http://192.168.30.88:8000";
+const API_URL = "https://fmd-6pes.onrender.com";
 
 interface AuthContextType {
   isAuthenticated: boolean;
