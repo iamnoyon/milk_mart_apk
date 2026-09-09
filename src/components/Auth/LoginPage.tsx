@@ -9,7 +9,7 @@ import Toast from "react-native-toast-message";
 export default function LoginPage() {
     const [phone, setPhone] = useState("");
 
-    const [ResendOTP, {isLoading}] = useResendOTPForRegisterdUserToLoginMutation()
+    const [ResendOTP, { isLoading }] = useResendOTPForRegisterdUserToLoginMutation()
 
     const handlePhoneChange = (value: string) => {
         const digitsOnly = value.replace(/\D/g, "");
@@ -38,15 +38,21 @@ export default function LoginPage() {
             .then((res) => {
                 if (res?.status_code === 200 || res?.success) {
                     router.push({ pathname: "/otp-verify", params: { phone: phone } });
+                    Toast.show({
+                        type: "success",
+                        text1: "OTP send successfull!",
+                        text2: `OTP: ${res?.OTP}`,
+                        visibilityTime: 10000
+                    });
                 }
             })
             .catch((error) => {
                 Toast.show({
                     type: "error",
-                    text1: "Login failed",
+                    text1: "OTP send failed",
                     text2: error?.data?.detail,
                 });
-                if(error?.status == 404){
+                if (error?.status == 404) {
                     router.push('/register')
                 }
             });
