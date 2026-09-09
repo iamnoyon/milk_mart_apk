@@ -115,6 +115,12 @@ export default function RegisterPage() {
             phone: form.phone,
           },
         });
+        Toast.show({
+          type: 'success',
+          text1: 'Registration successfull!',
+          text2: `OTP: ${res?.OTP}`,
+          visibilityTime: 10000
+        })
       } else {
        
       }
