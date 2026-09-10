@@ -11,7 +11,7 @@ export default function HomeLayout() {
     <Tabs
       screenOptions={{
         header: () => <AppHeader />,
-        tabBarActiveTintColor: theme.tint,
+        tabBarActiveTintColor: "#57810d",
         tabBarInactiveTintColor: theme.textSecondary,
         tabBarLabelStyle: styles.tabLabel,
         tabBarStyle: [
