@@ -194,12 +194,12 @@ export default function HomeTab() {
             <Text
               style={[styles.deliverySubtitle, { color: theme.textSecondary }]}
             >
-              On orders up to 500tk
+              On orders over ৳500
             </Text>
           </View>
 
           <Image
-            source={require("@/assets/images/delivery.png")}
+            source={require("@/assets/images/deliver-bike-svgrepo-com.svg")}
             style={styles.deliveryImage}
             contentFit="contain"
           />
