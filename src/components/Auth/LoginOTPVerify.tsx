@@ -77,7 +77,8 @@ export default function VerifyOtpPage({
             console.log("OTP verification successful:", res);
             if(res?.status_code === 200 || res?.success) {
                 await saveToken(res?.token);
-                router.push("/home");
+                router.dismissAll();
+                router.replace("/home");
                 Toast.show({
                 type: 'success',
                 text1: 'OTP Verified!',
