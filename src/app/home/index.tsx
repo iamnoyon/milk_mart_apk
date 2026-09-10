@@ -28,7 +28,7 @@ const CATEGORIES = [
   { id: "2", name: "Cheese", icon: "cheese" },
   { id: "3", name: "Butter", icon: "food" },
   { id: "4", name: "Yogurt", icon: "cup-water" },
-  {id: "5", name: "More", icon: "dots-horizontal"}
+  { id: "5", name: "More", icon: "dots-horizontal" }
 ];
 
 const BEST_SELLERS = [
@@ -125,7 +125,7 @@ export default function HomeTab() {
             Best Seller
           </Text>
           <Pressable onPress={() => router.push("/home/categories")}>
-            <Text style={[styles.seeMore, { color: '#57810d'}]}>
+            <Text style={[styles.seeMore, { color: '#57810d' }]}>
               See more
             </Text>
           </Pressable>
@@ -191,10 +191,8 @@ export default function HomeTab() {
             <Text style={[styles.deliveryTitle, { color: '#57810d' }]}>
               Free Delivery
             </Text>
-            <Text
-              style={[styles.deliverySubtitle, { color: theme.textSecondary }]}
-            >
-              On orders over ৳500
+            <Text style={[styles.deliverySubtitle, { color: theme.textSecondary }]}>
+              On orders over <Text style={{ fontWeight: "700" }}>৳500</Text>
             </Text>
           </View>
 
