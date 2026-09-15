@@ -14,6 +14,9 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Image } from "expo-image";
 import { useTheme } from "@/hooks/use-theme";
+import ProductCard from "@/components/ProductCard";
+import { useGetCategoryListQuery } from "@/store/admin/category"
+import { useGetProductListQuery } from "@/store/admin/products"
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -21,14 +24,6 @@ const BANNERS = [
   { id: "1", title: "Fresh Milk Daily", subtitle: "Up to 20% off", color: "#092C0E" },
   { id: "2", title: "New Arrivals", subtitle: "Check it out", color: "#1a5c24" },
   { id: "3", title: "Free Delivery", subtitle: "On orders over $50", color: "#2d7a38" },
-];
-
-const CATEGORIES = [
-  { id: "1", name: "Milk", icon: "cow" },
-  { id: "2", name: "Cheese", icon: "cheese" },
-  { id: "3", name: "Butter", icon: "food" },
-  { id: "4", name: "Yogurt", icon: "cup-water" },
-  { id: "5", name: "More", icon: "dots-horizontal" }
 ];
 
 const BEST_SELLERS = [
@@ -43,6 +38,9 @@ export default function HomeTab() {
   const [search, setSearch] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
+
+  const { data: categoryData } = useGetCategoryListQuery()
+  const { data: productList } = useGetProductListQuery()
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
@@ -101,10 +99,10 @@ export default function HomeTab() {
       {/* Categories Row */}
       <View style={styles.categoriesSection}>
         <View style={styles.categoryRow}>
-          {CATEGORIES.map((cat) => (
+          {categoryData?.data?.map((cat) => (
             <Pressable
               key={cat.id}
-              onPress={() => router.push("/home/categories")}
+              onPress={() => cat?.name === "More" ? router.push("/home/categories") : router.push({ pathname: `/home/categories/${cat.id}`, params: { name: cat.name } })}
               style={styles.categoryItem}
             >
               <View style={[styles.iconBg, { backgroundColor: '#e9f3d8' }]}>
@@ -124,7 +122,7 @@ export default function HomeTab() {
           <Text style={[styles.sectionTitle, { color: theme.text }]}>
             Best Seller
           </Text>
-          <Pressable onPress={() => router.push("/home/categories")}>
+          <Pressable onPress={() => router.push("/home/categories/product")}>
             <Text style={[styles.seeMore, { color: '#57810d' }]}>
               See more
             </Text>
@@ -136,45 +134,13 @@ export default function HomeTab() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.bestSellerList}
         >
-          {BEST_SELLERS.map((product) => (
-            <View
+          {productList?.data?.map((product) => (
+            <ProductCard
               key={product.id}
-              style={[styles.productCard, { backgroundColor: theme.background }]}
-            >
-              <View
-                style={[
-                  styles.productImage,
-                  { backgroundColor: theme.backgroundElement },
-                ]}
-              >
-                <Image
-                  source={require("@/assets/images/welcome.webp")}
-                  style={styles.productImageContent}
-                  contentFit="cover"
-                />
-              </View>
-
-              <Text
-                style={[styles.productName, { color: theme.text }]}
-                numberOfLines={1}
-              >
-                {product.name}
-              </Text>
-              <Text style={[styles.productWeight, { color: theme.textSecondary }]}>
-                {product.weight}
-              </Text>
-
-              <View style={styles.productBottom}>
-                <Text style={[styles.productPrice, { color: '#57810d' }]}>
-                  ${product.price.toFixed(2)}
-                </Text>
-                <Pressable
-                  style={[styles.addButton, { backgroundColor: '#57810d' }]}
-                >
-                  <MaterialCommunityIcons name="plus" size={18} color="#fff" />
-                </Pressable>
-              </View>
-            </View>
+              product={product}
+              variant="horizontal"
+              onPress={() => router.push(`/home/categories/product/${product.id}`)}
+            />
           ))}
         </ScrollView>
       </View>
@@ -303,53 +269,6 @@ const styles = StyleSheet.create({
   bestSellerList: {
     paddingHorizontal: 16,
     gap: 12,
-  },
-  productCard: {
-    width: 150,
-    borderRadius: 12,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: "#eee",
-  },
-  productImage: {
-    height: 110,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    marginHorizontal: -10,
-    marginTop: -10,
-    marginBottom: 8,
-    overflow: "hidden",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  productImageContent: {
-    width: "100%",
-    height: "100%",
-  },
-  productName: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  productWeight: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  productBottom: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 10,
-  },
-  productPrice: {
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  addButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
   },
   deliveryBannerSection: {
     marginTop: 12,

@@ -1,4 +1,4 @@
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { Platform, StyleSheet } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTheme } from "@/hooks/use-theme";
@@ -6,6 +6,7 @@ import AppHeader from "@/components/AppHeader";
 
 export default function HomeLayout() {
   const theme = useTheme();
+  const router = useRouter();
 
   return (
     <Tabs
@@ -40,6 +41,12 @@ export default function HomeLayout() {
               color={color}
             />
           ),
+        }}
+        listeners={{
+          tabPress: (e) => {
+            e.preventDefault();
+            router.navigate("/home/categories");
+          },
         }}
       />
       <Tabs.Screen

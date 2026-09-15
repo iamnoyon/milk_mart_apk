@@ -15,7 +15,7 @@ const CATEGORIES = [
   { id: "8", name: "Beverages", total: 27 },
 ];
 
-export default function CategoriesTab() {
+export default function CategoriesIndex() {
   const theme = useTheme();
 
   return (
@@ -32,7 +32,7 @@ export default function CategoriesTab() {
         }
         renderItem={({ item }) => (
           <Pressable
-            onPress={() => router.push("/home/categories")}
+            onPress={() => router.push({ pathname: `/home/categories/${item.id}`, params: { name: item.name } })}
             style={({ pressed }) => [
               styles.card,
               {
