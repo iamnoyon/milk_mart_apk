@@ -7,16 +7,6 @@ import ProductCard from "@/components/ProductCard";
 import { addToCart } from "@/store/cart";
 import { useGetProductsByCategoryIdQuery } from "@/store/admin/products";
 
-const PRODUCTS = [
-  { id: "1", name: "Fresh Cow Milk", weight: "1 Liter", price: 4.99 },
-  { id: "2", name: "Cheddar Cheese", weight: "500 gram", price: 7.5 },
-  { id: "3", name: "Salted Butter", weight: "250 gram", price: 3.25 },
-  { id: "4", name: "Greek Yogurt", weight: "1 kg", price: 6.0 },
-  { id: "5", name: "Paneer", weight: "400 gram", price: 5.5 },
-  { id: "6", name: "Cream Cheese", weight: "200 gram", price: 4.0 },
-  { id: "7", name: "Mozzarella", weight: "500 gram", price: 8.0 },
-  { id: "8", name: "Ghee", weight: "500 ml", price: 12.0 },
-];
 
 export default function CategoryDetail() {
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
@@ -55,7 +45,7 @@ export default function CategoryDetail() {
               <Text style={styles.bannerSubtitle}>{productList?.total} Products</Text>
             </View>
             <View style={styles.bannerIconWrap}>
-              <MaterialCommunityIcons name="tag-text" size={24} color="#57810d" />
+              <MaterialCommunityIcons name={ productList?.categoryIcon || "tag-text"} size={24} color="#57810d" />
             </View>
           </View>
         }
