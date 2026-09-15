@@ -15,11 +15,9 @@ import {
   clearToken,
   clearUser,
 } from "@/store/user";
+import { clearCart } from "@/store/cart";
 
 const TOKEN_KEY = "access_token";
-
-const API_URL = "https://fmd-6pes.onrender.com";
-// const API_URL = "http://192.168.30.88:8000";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -63,7 +61,7 @@ export function AuthProvider({
         dispatch(setToken(storedToken));
 
         try {
-          const response = await fetch(`${API_URL}/auth/me`, {
+          const response = await fetch(`https://fmd-6pes.onrender.com/auth/me`, {
             method: "GET",
             headers: {
               Authorization: `Bearer ${storedToken}`,
@@ -116,6 +114,7 @@ export function AuthProvider({
       // Clear Redux state
       dispatch(clearToken());
       dispatch(clearUser());
+      dispatch(clearCart());
 
       // Update authentication state
       setIsAuthenticated(false);

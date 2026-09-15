@@ -125,12 +125,20 @@ export default function RegisterPage() {
        
       }
     } catch (err: any) {
-      console.log(err)
-       Toast.show({
-          type: 'error',
-          text1: 'Registration failed!',
-          text2: err.data.detail
-        })
+      console.log("Register error:", err);
+
+      const message =
+        err?.data?.detail ||
+        err?.data?.message ||
+        err?.error ||
+        err?.message ||
+        "Something went wrong. Please try again.";
+
+      Toast.show({
+        type: "error",
+        text1: "Registration failed!",
+        text2: String(message),
+      });
     }
   };
 
