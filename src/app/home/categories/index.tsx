@@ -1,30 +1,24 @@
-import { View, Text, StyleSheet, Pressable, FlatList } from "react-native";
+import { View, Text, StyleSheet, FlatList, Pressable } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { useTheme } from "@/hooks/use-theme";
+import Skeleton from "@/components/Skeleton";
 import { useGetCategoryListQuery } from "@/store/admin/category";
 
-const CATEGORIES = [
-  { id: "1", name: "Milk", total: 24 },
-  { id: "2", name: "Cheese", total: 18 },
-  { id: "3", name: "Butter", total: 12 },
-  { id: "4", name: "Yogurt", total: 30 },
-  { id: "5", name: "Cream", total: 15 },
-  { id: "6", name: "Ice Cream", total: 22 },
-  { id: "7", name: "Sweets", total: 9 },
-  { id: "8", name: "Beverages", total: 27 },
-];
+const SKELETON_COUNT = 8;
 
 export default function CategoriesIndex() {
   const theme = useTheme();
-  const { data: categorylist } = useGetCategoryListQuery()
+  const { data: categorylist, isLoading } = useGetCategoryListQuery();
+
+  const skeletonData = Array.from({ length: SKELETON_COUNT });
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <FlatList
-        data={categorylist?.data}
-        keyExtractor={(item) => item.id}
+        data={isLoading ? skeletonData : categorylist?.data}
+        keyExtractor={(item, index) => (isLoading ? `skeleton-${index}` : item.id.toString())}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
@@ -32,47 +26,70 @@ export default function CategoriesIndex() {
             All Categories
           </Text>
         }
-        renderItem={({ item }) => (
-          <Pressable
-            onPress={() => router.push({ pathname: `/home/categories/${item.id}`, params: { name: item.name } })}
-            style={({ pressed }) => [
-              styles.card,
-              {
-                backgroundColor: theme.background,
-                borderColor: theme.backgroundElement,
-                opacity: pressed ? 0.7 : 1,
-              },
-            ]}
-          >
+        renderItem={({ item, index }) =>
+          isLoading ? (
             <View
               style={[
-                styles.imageWrap,
-                { backgroundColor: theme.backgroundElement },
+                styles.card,
+                {
+                  backgroundColor: theme.background,
+                  borderColor: theme.backgroundElement,
+                },
               ]}
             >
-              <Image
-                source={{ uri: item?.image }}
-                style={styles.image}
-                contentFit="contain"
+              <Skeleton width={56} height={56} borderRadius={12} />
+              <View style={styles.info}>
+                <Skeleton width="70%" height={15} borderRadius={4} />
+                <Skeleton width="40%" height={12} borderRadius={4} style={{ marginTop: 6 }} />
+              </View>
+            </View>
+          ) : (
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: `/home/categories/${item.id}`,
+                  params: { name: item.name },
+                })
+              }
+              style={({ pressed }) => [
+                styles.card,
+                {
+                  backgroundColor: theme.background,
+                  borderColor: theme.backgroundElement,
+                  opacity: pressed ? 0.7 : 1,
+                },
+              ]}
+            >
+              <View
+                style={[
+                  styles.imageWrap,
+                  { backgroundColor: theme.backgroundElement },
+                ]}
+              >
+                <Image
+                  source={{ uri: item?.image }}
+                  style={styles.image}
+                  contentFit="contain"
+                />
+              </View>
+
+              <View style={styles.info}>
+                <Text style={[styles.title, { color: theme.text }]}>
+                  {item?.name}
+                </Text>
+                <Text style={[styles.total, { color: theme.textSecondary }]}>
+                  {item?.quantity} Products
+                </Text>
+              </View>
+
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={24}
+                color={theme.textSecondary}
               />
-            </View>
-
-            <View style={styles.info}>
-              <Text style={[styles.title, { color: theme.text }]}>
-                {item?.name}
-              </Text>
-              <Text style={[styles.total, { color: theme.textSecondary }]}>
-                {item?.quantity} Products
-              </Text>
-            </View>
-
-            <MaterialCommunityIcons
-              name="chevron-right"
-              size={24}
-              color={theme.textSecondary}
-            />
-          </Pressable>
-        )}
+            </Pressable>
+          )
+        }
       />
     </View>
   );

@@ -35,5 +35,6 @@ export const productSlice = apiSlice.injectEndpoints({
 export const {
   useGetProductListQuery,
   useGetProductsByCategoryIdQuery,
+  useLazyGetProductsByCategoryIdQuery,
   useGetProductbyIdQuery
 } = productSlice;

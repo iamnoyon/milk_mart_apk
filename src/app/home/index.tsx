@@ -16,6 +16,7 @@ import { Image } from "expo-image";
 import { useDispatch } from "react-redux";
 import { useTheme } from "@/hooks/use-theme";
 import ProductCard from "@/components/ProductCard";
+import Skeleton from "@/components/Skeleton";
 import { addToCart } from "@/store/cart";
 import { useGetCategoryListQuery } from "@/store/admin/category"
 import { useGetProductListQuery } from "@/store/admin/products"
@@ -28,12 +29,6 @@ const BANNERS = [
   { id: "3", title: "Free Delivery", subtitle: "On orders over $50", color: "#2d7a38" },
 ];
 
-const BEST_SELLERS = [
-  { id: "1", name: "Fresh Cow Milk", weight: "1 Liter", price: 4.99, icon: "cow" },
-  { id: "2", name: "Cheddar Cheese", weight: "500 gram", price: 7.5, icon: "cheese" },
-  { id: "3", name: "Salted Butter", weight: "250 gram", price: 3.25, icon: "food" },
-  { id: "4", name: "Greek Yogurt", weight: "1 kg", price: 6.0, icon: "cup-water" },
-];
 
 export default function HomeTab() {
   const theme = useTheme();
@@ -42,8 +37,8 @@ export default function HomeTab() {
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
 
-  const { data: categoryData } = useGetCategoryListQuery()
-  const { data: productList } = useGetProductListQuery()
+  const { data: categoryData, isLoading: categoryLoading } = useGetCategoryListQuery({})
+  const { data: productList, isLoading: productLoading } = useGetProductListQuery({})
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
@@ -102,20 +97,27 @@ export default function HomeTab() {
       {/* Categories Row */}
       <View style={styles.categoriesSection}>
         <View style={styles.categoryRow}>
-          {categoryData?.data?.map((cat) => (
-            <Pressable
-              key={cat.id}
-              onPress={() => cat?.name === "More" ? router.push("/home/categories") : router.push({ pathname: `/home/categories/${cat.id}`, params: { name: cat.name } })}
-              style={styles.categoryItem}
-            >
-              <View style={[styles.iconBg, { backgroundColor: '#e9f3d8' }]}>
-                <MaterialCommunityIcons name={cat.icon as any} size={24} color='#4e7707' />
-              </View>
-              <Text style={[styles.categoryName, { color: theme.text }]} numberOfLines={1}>
-                {cat.name}
-              </Text>
-            </Pressable>
-          ))}
+          {categoryLoading
+            ? Array.from({ length: 5 }).map((_, i) => (
+                <View key={i} style={styles.categoryItem}>
+                  <Skeleton width={48} height={48} borderRadius={14} />
+                  <Skeleton width={44} height={10} borderRadius={4} style={{ marginTop: 6 }} />
+                </View>
+              ))
+            : categoryData?.data?.map((cat) => (
+                <Pressable
+                  key={cat.id}
+                  onPress={() => cat?.name === "More" ? router.push("/home/categories") : router.push({ pathname: `/home/categories/${cat.id}`, params: { name: cat.name } })}
+                  style={styles.categoryItem}
+                >
+                  <View style={[styles.iconBg, { backgroundColor: '#e9f3d8' }]}>
+                    <MaterialCommunityIcons name={cat.icon as any} size={24} color='#4e7707' />
+                  </View>
+                  <Text style={[styles.categoryName, { color: theme.text }]} numberOfLines={1}>
+                    {cat.name}
+                  </Text>
+                </Pressable>
+              ))}
         </View>
       </View>
 
@@ -137,22 +139,34 @@ export default function HomeTab() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.bestSellerList}
         >
-          {productList?.data?.map((product: any) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              variant="horizontal"
-              onPress={() => router.push(`/home/categories/product/${product.id}`)}
-              onAdd={() => dispatch(addToCart({
-                id: product.id,
-                name: product.name,
-                image: product.image,
-                price: product.price,
-                weight: product.weight,
-                weight_type: product.weight_type,
-              }))}
-            />
-          ))}
+          {productLoading
+            ? Array.from({ length: 4 }).map((_, i) => (
+                <View key={i} style={styles.productSkeleton}>
+                  <Skeleton width="100%" height={110} borderRadius={12} />
+                  <Skeleton width="80%" height={14} borderRadius={4} style={{ marginTop: 10 }} />
+                  <Skeleton width="50%" height={11} borderRadius={4} style={{ marginTop: 6 }} />
+                  <View style={styles.skeletonBottomRow}>
+                    <Skeleton width={60} height={15} borderRadius={4} />
+                    <Skeleton width={30} height={30} borderRadius={8} />
+                  </View>
+                </View>
+              ))
+            : productList?.data?.map((product: any) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  variant="horizontal"
+                  onPress={() => router.push(`/home/categories/product/${product.id}`)}
+                  onAdd={() => dispatch(addToCart({
+                    id: product.id,
+                    name: product.name,
+                    image: product.image,
+                    price: product.price,
+                    weight: product.weight,
+                    weight_type: product.weight_type,
+                  }))}
+                />
+              ))}
         </ScrollView>
       </View>
 
@@ -280,6 +294,19 @@ const styles = StyleSheet.create({
   bestSellerList: {
     paddingHorizontal: 16,
     gap: 12,
+  },
+  productSkeleton: {
+    width: 150,
+    borderRadius: 12,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  skeletonBottomRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 10,
   },
   deliveryBannerSection: {
     marginTop: 12,

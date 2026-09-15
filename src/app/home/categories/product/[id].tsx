@@ -13,6 +13,7 @@ import { Image } from "expo-image";
 import { useDispatch } from "react-redux";
 import Toast from "react-native-toast-message";
 import { useTheme } from "@/hooks/use-theme";
+import Skeleton from "@/components/Skeleton";
 import { useGetProductbyIdQuery } from "@/store/admin/products";
 import { addToCart } from "@/store/cart";
 
@@ -24,7 +25,10 @@ export default function ProductDetail() {
   const [added, setAdded] = useState(false);
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  const { data: productData } = useGetProductbyIdQuery({ id }, { skip: !id });
+  const { data: productData, isLoading } = useGetProductbyIdQuery(
+    { id },
+    { skip: !id }
+  );
 
   const product = productData?.data;
 
@@ -32,14 +36,16 @@ export default function ProductDetail() {
     if (!product) return;
 
     for (let i = 0; i < quantity; i++) {
-      dispatch(addToCart({
-        id: product.id,
-        name: product.name,
-        image: product.image,
-        price: product.price,
-        weight: product.weight,
-        weight_type: product.weight_type,
-      }));
+      dispatch(
+        addToCart({
+          id: product.id,
+          name: product.name,
+          image: product.image,
+          price: product.price,
+          weight: product.weight,
+          weight_type: product.weight_type,
+        })
+      );
     }
 
     setAdded(true);
@@ -66,6 +72,71 @@ export default function ProductDetail() {
 
     setTimeout(() => setAdded(false), 800);
   };
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <Skeleton width="100%" height={280} borderRadius={0} />
+
+          <View style={styles.content}>
+            <View style={styles.header}>
+              <View style={{ flex: 1, gap: 8 }}>
+                <Skeleton width="80%" height={20} borderRadius={6} />
+                <Skeleton width="50%" height={14} borderRadius={4} />
+              </View>
+              <Skeleton width={90} height={24} borderRadius={6} />
+            </View>
+
+            <View
+              style={[
+                styles.divider,
+                { backgroundColor: theme.backgroundElement },
+              ]}
+            />
+
+            <Skeleton
+              width={120}
+              height={16}
+              borderRadius={4}
+              style={{ marginBottom: 12 }}
+            />
+            <Skeleton width="100%" height={14} borderRadius={4} />
+            <Skeleton
+              width="100%"
+              height={14}
+              borderRadius={4}
+              style={{ marginTop: 8 }}
+            />
+            <Skeleton
+              width="85%"
+              height={14}
+              borderRadius={4}
+              style={{ marginTop: 8 }}
+            />
+            <Skeleton
+              width="70%"
+              height={14}
+              borderRadius={4}
+              style={{ marginTop: 8 }}
+            />
+          </View>
+        </ScrollView>
+
+        <View
+          style={[
+            styles.bottomBar,
+            {
+              backgroundColor: theme.background,
+              borderTopColor: theme.backgroundElement,
+            },
+          ]}
+        >
+          <Skeleton width={140} height={44} borderRadius={12} />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -104,27 +175,6 @@ export default function ProductDetail() {
           { backgroundColor: theme.background, borderTopColor: theme.backgroundElement },
         ]}
       >
-        {/* <View style={styles.quantityWrap}>
-          <Pressable
-            onPress={() => setQuantity((q) => Math.max(1, q - 1))}
-            style={({ pressed }) => [
-              styles.qtyBtn,
-              { backgroundColor: theme.backgroundElement, transform: [{ scale: pressed ? 0.9 : 1 }] },
-            ]}
-          >
-            <MaterialCommunityIcons name="minus" size={18} color={theme.text} />
-          </Pressable>
-          <Text style={[styles.qtyText, { color: theme.text }]}>{quantity}</Text>
-          <Pressable
-            onPress={() => setQuantity((q) => q + 1)}
-            style={({ pressed }) => [
-              styles.qtyBtn,
-              { backgroundColor: theme.backgroundElement, transform: [{ scale: pressed ? 0.9 : 1 }] },
-            ]}
-          >
-            <MaterialCommunityIcons name="plus" size={18} color={theme.text} />
-          </Pressable>
-        </View> */}
         <Pressable
           onPress={handleAddToCart}
           style={({ pressed }) => [
@@ -205,22 +255,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderTopWidth: 1,
-  },
-  quantityWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  qtyBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  qtyText: {
-    fontSize: 16,
-    fontWeight: "700",
   },
   addBtn: {
     flexDirection: "row",
