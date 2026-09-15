@@ -13,8 +13,10 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Image } from "expo-image";
+import { useDispatch } from "react-redux";
 import { useTheme } from "@/hooks/use-theme";
 import ProductCard from "@/components/ProductCard";
+import { addToCart } from "@/store/cart";
 import { useGetCategoryListQuery } from "@/store/admin/category"
 import { useGetProductListQuery } from "@/store/admin/products"
 
@@ -35,6 +37,7 @@ const BEST_SELLERS = [
 
 export default function HomeTab() {
   const theme = useTheme();
+  const dispatch = useDispatch();
   const [search, setSearch] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
@@ -134,12 +137,20 @@ export default function HomeTab() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.bestSellerList}
         >
-          {productList?.data?.map((product) => (
+          {productList?.data?.map((product: any) => (
             <ProductCard
               key={product.id}
               product={product}
               variant="horizontal"
               onPress={() => router.push(`/home/categories/product/${product.id}`)}
+              onAdd={() => dispatch(addToCart({
+                id: product.id,
+                name: product.name,
+                image: product.image,
+                price: product.price,
+                weight: product.weight,
+                weight_type: product.weight_type,
+              }))}
             />
           ))}
         </ScrollView>

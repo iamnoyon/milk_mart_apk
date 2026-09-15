@@ -11,9 +11,10 @@ import * as SplashScreen from "expo-splash-screen";
 import { useColorScheme, ActivityIndicator, View } from "react-native";
 
 import { Provider } from "react-redux";
+import { PersistGate } from "redux-persist/integration/react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { store } from "@/store";
+import { store, persistor } from "@/store";
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
 import { AuthProvider, useAuth } from "@/components/Auth/AuthProvider";
 
@@ -55,17 +56,19 @@ export default function RootLayout() {
 
   return (
     <Provider store={store}>
-      <SafeAreaProvider>
-        <ThemeProvider
-          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-        >
-          <AuthProvider>
-            <AnimatedSplashOverlay />
-            <AppNavigator />
-          </AuthProvider>
-          <Toast />
-        </ThemeProvider>
-      </SafeAreaProvider>
+      <PersistGate loading={null} persistor={persistor}>
+        <SafeAreaProvider>
+          <ThemeProvider
+            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+          >
+            <AuthProvider>
+              <AnimatedSplashOverlay />
+              <AppNavigator />
+            </AuthProvider>
+            <Toast />
+          </ThemeProvider>
+        </SafeAreaProvider>
+      </PersistGate>
     </Provider>
   );
 }

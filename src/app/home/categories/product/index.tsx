@@ -2,13 +2,16 @@ import { useState } from "react";
 import { View, Text, StyleSheet, FlatList, Pressable, Modal } from "react-native";
 import { router } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useDispatch } from "react-redux";
 import { useTheme } from "@/hooks/use-theme";
 import ProductCard from "@/components/ProductCard";
 import { useGetCategoryListQuery } from "@/store/admin/category";
 import { useGetProductsByCategoryIdQuery } from "@/store/admin/products";
+import { addToCart } from "@/store/cart";
 
 export default function ProductIndex() {
   const theme = useTheme();
+  const dispatch = useDispatch();
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [showFilter, setShowFilter] = useState(false);
 
@@ -25,6 +28,14 @@ export default function ProductIndex() {
         if (item?.id == null) return;
         router.push(`/home/categories/product/${item.id}`);
       }}
+      onAdd={() => dispatch(addToCart({
+        id: item.id,
+        name: item.name,
+        image: item.image,
+        price: item.price,
+        weight: item.weight,
+        weight_type: item.weight_type,
+      }))}
     />
   );
 

@@ -1,8 +1,10 @@
 import { View, Text, StyleSheet, FlatList, Pressable } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useDispatch } from "react-redux";
 import { useTheme } from "@/hooks/use-theme";
 import ProductCard from "@/components/ProductCard";
+import { addToCart } from "@/store/cart";
 import { useGetProductsByCategoryIdQuery } from "@/store/admin/products";
 
 const PRODUCTS = [
@@ -19,12 +21,21 @@ const PRODUCTS = [
 export default function CategoryDetail() {
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
   const theme = useTheme();
+  const dispatch = useDispatch();
   const { data: productList} = useGetProductsByCategoryIdQuery({id}, {skip:!id})
 
-  const renderItem = ({ item }) => (
+  const renderItem = ({ item }: { item: any }) => (
     <ProductCard
       product={item}
       onPress={() => router.push(`/home/categories/product/${item.id}`)}
+      onAdd={() => dispatch(addToCart({
+        id: item.id,
+        name: item.name,
+        image: item.image,
+        price: item.price,
+        weight: item.weight,
+        weight_type: item.weight_type,
+      }))}
     />
   );
 

@@ -1,6 +1,14 @@
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import { useRef, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  Animated,
+} from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import Toast from "react-native-toast-message";
 import { useTheme } from "@/hooks/use-theme";
 
 interface Product {
@@ -31,9 +39,39 @@ export default function ProductCard({
   style,
 }: ProductCardProps) {
   const theme = useTheme();
+  const [added, setAdded] = useState(false);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const containerStyle =
     variant === "horizontal" ? styles.cardHorizontal : styles.cardGrid;
+
+  const handleAdd = () => {
+    onAdd?.();
+
+    setAdded(true);
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1.3,
+        duration: 120,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 120,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    Toast.show({
+      type: "success",
+      text1: "Added to cart",
+      text2: product.name,
+      position: "bottom",
+      visibilityTime: 1500,
+    });
+
+    setTimeout(() => setAdded(false), 600);
+  };
 
   return (
     <Pressable
@@ -66,10 +104,23 @@ export default function ProductCard({
           ৳{product.price.toFixed(2)}
         </Text>
         <Pressable
-          onPress={onAdd}
-          style={[styles.addButton, { backgroundColor: "#57810d" }]}
+          onPress={handleAdd}
+          hitSlop={8}
+          style={({ pressed }) => [
+            styles.addButton,
+            {
+              backgroundColor: added ? "#2e6b00" : "#57810d",
+              transform: [{ scale: pressed ? 0.9 : 1 }],
+            },
+          ]}
         >
-          <MaterialCommunityIcons name="plus" size={18} color="#fff" />
+          <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+            <MaterialCommunityIcons
+              name={added ? "check" : "plus"}
+              size={18}
+              color="#fff"
+            />
+          </Animated.View>
         </Pressable>
       </View>
     </Pressable>

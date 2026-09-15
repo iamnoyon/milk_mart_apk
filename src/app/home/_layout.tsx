@@ -1,8 +1,28 @@
 import { Tabs, useRouter } from "expo-router";
-import { Platform, StyleSheet } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useSelector } from "react-redux";
 import { useTheme } from "@/hooks/use-theme";
 import AppHeader from "@/components/AppHeader";
+
+function CartTabIcon({ color, size }: { color: string; size: number }) {
+  const cartCount = useSelector((state: any) =>
+    state.cart.items.reduce((sum: number, item: any) => sum + item.quantity, 0)
+  );
+
+  return (
+    <View>
+      <MaterialCommunityIcons name="cart" size={size} color={color} />
+      {cartCount > 0 && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>
+            {cartCount > 99 ? "99+" : cartCount}
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+}
 
 export default function HomeLayout() {
   const theme = useTheme();
@@ -54,7 +74,7 @@ export default function HomeLayout() {
         options={{
           title: "Cart",
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="cart" size={size} color={color} />
+            <CartTabIcon color={color} size={size} />
           ),
         }}
       />
@@ -76,7 +96,11 @@ export default function HomeLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="account" size={size} color={color} />
+            <MaterialCommunityIcons
+              name="account"
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
@@ -98,5 +122,25 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 11,
     fontWeight: "600",
+  },
+  badge: {
+    position: "absolute",
+    top: -4,
+    right: -10,
+    backgroundColor: "#e53935",
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: "#fff",
+  },
+  badgeText: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "700",
+    lineHeight: 12,
   },
 });
