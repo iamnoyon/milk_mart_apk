@@ -1,5 +1,15 @@
-import { View, Text, StyleSheet, FlatList, Pressable, Image } from "react-native";
+import { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  Pressable,
+  Image,
+  TextInput,
+} from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import Toast from "react-native-toast-message";
 import { useDispatch, useSelector } from "react-redux";
 import { useTheme } from "@/hooks/use-theme";
 import {
@@ -9,16 +19,64 @@ import {
   clearCart,
 } from "@/store/cart";
 
+const DELIVERY_FEE = 50;
+
+const COUPONS: Record<string, { type: "percent" | "flat"; value: number; label: string }> = {
+  SAVE10: { type: "percent", value: 10, label: "10% off" },
+  FLAT50: { type: "flat", value: 50, label: "৳50 off" },
+  WELCOME: { type: "percent", value: 20, label: "20% off" },
+};
+
 export default function CartTab() {
   const theme = useTheme();
   const dispatch = useDispatch();
 
   const items = useSelector((state: any) => state.cart.items);
 
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    type: "percent" | "flat";
+    value: number;
+    label: string;
+    discount: number;
+  } | null>(null);
+
   const subtotal = items.reduce(
     (sum: number, item: any) => sum + item.price * item.quantity,
     0
   );
+
+  const discount = appliedCoupon?.discount ?? 0;
+  const total = Math.max(0, subtotal - discount + DELIVERY_FEE);
+
+  const handleApplyCoupon = () => {
+    const code = couponCode.trim().toUpperCase();
+    if (!code) {
+      Toast.show({ type: "error", text1: "Enter a coupon code", position: "bottom" });
+      return;
+    }
+    const coupon = COUPONS[code];
+    if (!coupon) {
+      Toast.show({ type: "error", text1: "Invalid coupon code", position: "bottom" });
+      return;
+    }
+    const discountValue =
+      coupon.type === "percent" ? (subtotal * coupon.value) / 100 : coupon.value;
+    setAppliedCoupon({ code, ...coupon, discount: discountValue });
+    setCouponCode("");
+    Toast.show({
+      type: "success",
+      text1: "Coupon applied",
+      text2: `${coupon.label} on this order`,
+      position: "bottom",
+    });
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    Toast.show({ type: "info", text1: "Coupon removed", position: "bottom" });
+  };
 
   const renderItem = ({ item }: { item: any }) => (
     <View
@@ -143,13 +201,101 @@ export default function CartTab() {
           },
         ]}
       >
-        <View style={styles.totalRow}>
-          <Text style={[styles.totalLabel, { color: theme.textSecondary }]}>
+        {appliedCoupon ? (
+          <View
+            style={[
+              styles.couponApplied,
+              { backgroundColor: "#e9f3d8", borderColor: "#57810d" },
+            ]}
+          >
+            <View style={styles.couponAppliedLeft}>
+              <MaterialCommunityIcons name="ticket-percent" size={18} color="#57810d" />
+              <View>
+                <Text style={styles.couponCode}>{appliedCoupon.code}</Text>
+                <Text style={styles.couponLabel}>{appliedCoupon.label}</Text>
+              </View>
+            </View>
+            <Pressable onPress={handleRemoveCoupon} hitSlop={8}>
+              <MaterialCommunityIcons name="close" size={18} color="#57810d" />
+            </Pressable>
+          </View>
+        ) : (
+          <View
+            style={[
+              styles.couponField,
+              { backgroundColor: theme.backgroundElement },
+            ]}
+          >
+            <MaterialCommunityIcons
+              name="ticket-percent-outline"
+              size={18}
+              color={theme.textSecondary}
+            />
+            <TextInput
+              value={couponCode}
+              onChangeText={setCouponCode}
+              placeholder="Enter coupon code"
+              placeholderTextColor={theme.textSecondary}
+              autoCapitalize="characters"
+              style={[styles.couponInput, { color: theme.text }]}
+              returnKeyType="done"
+            />
+            <Pressable
+              onPress={handleApplyCoupon}
+              style={({ pressed }) => [
+                styles.applyBtn,
+                { opacity: pressed ? 0.85 : 1 },
+              ]}
+            >
+              <Text style={styles.applyBtnText}>Apply Coupon</Text>
+            </Pressable>
+          </View>
+        )}
+
+        <View style={styles.summaryRow}>
+          <Text style={[styles.summaryLabel, { color: theme.textSecondary }]}>
             Subtotal ({items.length} items)
           </Text>
-          <Text style={styles.totalAmount}>৳{subtotal.toFixed(2)}</Text>
+          <Text style={[styles.summaryValue, { color: theme.text }]}>
+            ৳{subtotal.toFixed(2)}
+          </Text>
         </View>
-        <Pressable style={styles.checkoutBtn}>
+
+        {appliedCoupon && (
+          <View style={styles.summaryRow}>
+            <Text style={[styles.summaryLabel, { color: "#57810d" }]}>
+              Coupon Discount
+            </Text>
+            <Text style={[styles.summaryValue, { color: "#57810d" }]}>
+              -৳{discount.toFixed(2)}
+            </Text>
+          </View>
+        )}
+
+        <View style={styles.summaryRow}>
+          <Text style={[styles.summaryLabel, { color: theme.textSecondary }]}>
+            Delivery Fee
+          </Text>
+          <Text style={[styles.summaryValue, { color: theme.text }]}>
+            ৳{DELIVERY_FEE.toFixed(2)}
+          </Text>
+        </View>
+
+        <View
+          style={[styles.divider, { backgroundColor: theme.backgroundElement }]}
+        />
+
+        <View style={styles.totalRow}>
+          <Text style={[styles.totalLabel, { color: theme.text }]}>Total</Text>
+          <Text style={styles.totalAmount}>৳{total.toFixed(2)}</Text>
+        </View>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.checkoutBtn,
+            { transform: [{ scale: pressed ? 0.98 : 1 }] },
+          ]}
+        >
           <Text style={styles.checkoutText}>Checkout</Text>
         </Pressable>
       </View>
@@ -270,7 +416,76 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderTopWidth: 1,
-    gap: 12,
+    gap: 4,
+  },
+  couponField: {
+    flexDirection: "row",
+    alignItems: "center",
+    height: 46,
+    borderRadius: 6,
+    paddingLeft: 12,
+    paddingRight: 4,
+    gap: 8,
+  },
+  couponInput: {
+    flex: 1,
+    height: "100%",
+    fontSize: 14,
+    fontWeight: "600",
+    paddingVertical: 0,
+  },
+  applyBtn: {
+    backgroundColor: "#57810d",
+    paddingHorizontal: 16,
+    height: 38,
+    borderRadius: 5,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  applyBtnText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  couponApplied: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  couponAppliedLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  couponCode: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#57810d",
+  },
+  couponLabel: {
+    fontSize: 12,
+    color: "#4e7707",
+  },
+  summaryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  summaryLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  summaryValue: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  divider: {
+    height: 1,
+    marginVertical: 2,
   },
   totalRow: {
     flexDirection: "row",
@@ -278,11 +493,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   totalLabel: {
-    fontSize: 14,
-    fontWeight: "500",
+    fontSize: 16,
+    fontWeight: "700",
   },
   totalAmount: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "800",
     color: "#57810d",
   },
@@ -291,6 +506,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
+    marginTop: 2,
   },
   checkoutText: {
     color: "#fff",
