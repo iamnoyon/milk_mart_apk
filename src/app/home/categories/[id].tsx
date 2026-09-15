@@ -3,6 +3,7 @@ import { useLocalSearchParams, router } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTheme } from "@/hooks/use-theme";
 import ProductCard from "@/components/ProductCard";
+import { useGetProductsByCategoryIdQuery } from "@/store/admin/products";
 
 const PRODUCTS = [
   { id: "1", name: "Fresh Cow Milk", weight: "1 Liter", price: 4.99 },
@@ -18,8 +19,9 @@ const PRODUCTS = [
 export default function CategoryDetail() {
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
   const theme = useTheme();
+  const { data: productList} = useGetProductsByCategoryIdQuery({id}, {skip:!id})
 
-  const renderItem = ({ item }: { item: (typeof PRODUCTS)[number] }) => (
+  const renderItem = ({ item }) => (
     <ProductCard
       product={item}
       onPress={() => router.push(`/home/categories/product/${item.id}`)}
@@ -29,7 +31,7 @@ export default function CategoryDetail() {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <FlatList
-        data={PRODUCTS}
+        data={productList?.data}
         keyExtractor={(item) => item.id}
         numColumns={2}
         contentContainerStyle={styles.listContent}
@@ -39,7 +41,7 @@ export default function CategoryDetail() {
           <View style={[styles.banner, { backgroundColor: "#e9f3d8" }]}>
             <View style={styles.bannerContent}>
               <Text style={styles.bannerTitle}>{name || `Category ${id}`}</Text>
-              <Text style={styles.bannerSubtitle}>{PRODUCTS.length} Products</Text>
+              <Text style={styles.bannerSubtitle}>{productList?.total} Products</Text>
             </View>
             <View style={styles.bannerIconWrap}>
               <MaterialCommunityIcons name="tag-text" size={24} color="#57810d" />

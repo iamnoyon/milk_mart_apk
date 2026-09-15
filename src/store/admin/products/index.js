@@ -15,11 +15,18 @@ export const productSlice = apiSlice.injectEndpoints({
         url: "/products/list",
         method: "GET",
       }),
+    }),
+    getProductsByCategoryId: builder.query({
+      query: ({id}) => ({
+        url: `/products/category/${id}`,
+        method: "GET",
+      }),
     })
   }),
   overrideExisting: true,
 });
 
 export const {
-  useGetProductListQuery
+  useGetProductListQuery,
+  useGetProductsByCategoryIdQuery
 } = productSlice;

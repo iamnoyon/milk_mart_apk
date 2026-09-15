@@ -3,6 +3,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { useTheme } from "@/hooks/use-theme";
+import { useGetCategoryListQuery } from "@/store/admin/category";
 
 const CATEGORIES = [
   { id: "1", name: "Milk", total: 24 },
@@ -17,11 +18,12 @@ const CATEGORIES = [
 
 export default function CategoriesIndex() {
   const theme = useTheme();
+  const { data: categorylist } = useGetCategoryListQuery()
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <FlatList
-        data={CATEGORIES}
+        data={categorylist?.data}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
@@ -49,7 +51,7 @@ export default function CategoriesIndex() {
               ]}
             >
               <Image
-                source={require("@/assets/images/welcome.webp")}
+                source={{ uri: item?.image }}
                 style={styles.image}
                 contentFit="contain"
               />
@@ -57,10 +59,10 @@ export default function CategoriesIndex() {
 
             <View style={styles.info}>
               <Text style={[styles.title, { color: theme.text }]}>
-                {item.name}
+                {item?.name}
               </Text>
               <Text style={[styles.total, { color: theme.textSecondary }]}>
-                {item.total} Products
+                {item?.quantity} Products
               </Text>
             </View>
 
