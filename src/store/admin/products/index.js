@@ -21,6 +21,12 @@ export const productSlice = apiSlice.injectEndpoints({
         url: `/products/category/${id}`,
         method: "GET",
       }),
+    }),
+    getProductbyId: builder.query({
+      query: ({id}) => ({
+        url: `/products/${id}`,
+        method: "GET",
+      }),
     })
   }),
   overrideExisting: true,
@@ -28,5 +34,6 @@ export const productSlice = apiSlice.injectEndpoints({
 
 export const {
   useGetProductListQuery,
-  useGetProductsByCategoryIdQuery
+  useGetProductsByCategoryIdQuery,
+  useGetProductbyIdQuery
 } = productSlice;

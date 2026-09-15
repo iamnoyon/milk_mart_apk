@@ -1,45 +1,22 @@
-import { useEffect, useRef } from "react";
 import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
-import { useLocalSearchParams, router, useNavigation } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useTheme } from "@/hooks/use-theme";
-
-const PRODUCTS: Record<string, { name: string; weight: string; price: number; description: string }> = {
-  "1": { name: "Fresh Cow Milk", weight: "1 Liter", price: 4.99, description: "Fresh and pure cow milk sourced directly from local farms. Rich in calcium and essential nutrients for a healthy lifestyle." },
-  "2": { name: "Cheddar Cheese", weight: "500 gram", price: 7.5, description: "Aged cheddar cheese with a rich, sharp flavor. Perfect for sandwiches, burgers, and cooking." },
-  "3": { name: "Salted Butter", weight: "250 gram", price: 3.25, description: "Creamy salted butter made from fresh cream. Ideal for cooking, baking, and spreading." },
-  "4": { name: "Greek Yogurt", weight: "1 kg", price: 6.0, description: "Thick and creamy Greek yogurt packed with protein. Great for breakfast or as a healthy snack." },
-  "5": { name: "Paneer", weight: "400 gram", price: 5.5, description: "Soft and fresh paneer made from pure milk. Perfect for curries, tikka, and other Indian dishes." },
-  "6": { name: "Cream Cheese", weight: "200 gram", price: 4.0, description: "Smooth and spreadable cream cheese. Great for bagels, dips, and cheesecakes." },
-  "7": { name: "Mozzarella", weight: "500 gram", price: 8.0, description: "Fresh mozzarella cheese with a mild, milky flavor. Perfect for pizza and pasta." },
-  "8": { name: "Ghee", weight: "500 ml", price: 12.0, description: "Pure cow ghee with a rich aroma. Ideal for cooking, frying, and traditional recipes." },
-};
+import { useGetProductbyIdQuery } from "@/store/admin/products";
 
 export default function ProductDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
-  const navigation = useNavigation();
-  const popping = useRef(false);
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener("beforeRemove", (e) => {
-      if (popping.current) return;
-      e.preventDefault();
-      popping.current = true;
-      router.replace("/home/categories/product");
-    });
-    return unsubscribe;
-  }, [navigation]);
-
-  const product = PRODUCTS[id || ""] || { name: "Product", weight: "", price: 0, description: "" };
+  const { data: productData } = useGetProductbyIdQuery({ id }, { skip: !id });
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={[styles.imageWrap, { backgroundColor: theme.backgroundElement }]}>
           <Image
-            source={require("@/assets/images/welcome.webp")}
+             source={{ uri: productData?.data?.image }}
             style={styles.image}
             contentFit="cover"
           />
@@ -48,16 +25,16 @@ export default function ProductDetail() {
         <View style={styles.content}>
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.name, { color: theme.text }]}>{product.name}</Text>
-              <Text style={[styles.weight, { color: theme.textSecondary }]}>{product.weight}</Text>
+              <Text style={[styles.name, { color: theme.text }]}>{productData?.data?.name}</Text>
+              <Text style={[styles.weight, { color: theme.textSecondary }]}>{productData?.data?.weight+" "+productData?.data?.weight_type}</Text>
             </View>
-            <Text style={styles.price}>${product.price.toFixed(2)}</Text>
+            <Text style={styles.price}>৳{productData?.data?.price?.toFixed(2)}</Text>
           </View>
 
           <View style={[styles.divider, { backgroundColor: theme.backgroundElement }]} />
 
           <Text style={[styles.descTitle, { color: theme.text }]}>Description</Text>
-          <Text style={[styles.desc, { color: theme.textSecondary }]}>{product.description}</Text>
+          <Text style={[styles.desc, { color: theme.textSecondary }]}>{productData?.data?.description || '-'}</Text>
         </View>
       </ScrollView>
 
