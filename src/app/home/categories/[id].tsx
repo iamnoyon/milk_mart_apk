@@ -3,6 +3,7 @@ import { useLocalSearchParams, router } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDispatch } from "react-redux";
 import { useTheme } from "@/hooks/use-theme";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import ProductCard from "@/components/ProductCard";
 import Skeleton from "@/components/Skeleton";
 import { addToCart } from "@/store/cart";
@@ -16,10 +17,12 @@ export default function CategoryDetail() {
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
   const theme = useTheme();
   const dispatch = useDispatch();
-  const { data: productList, isLoading } = useGetProductsByCategoryIdQuery(
+  const { data: productList, isLoading, refetch } = useGetProductsByCategoryIdQuery(
     { id },
     { skip: !id }
   );
+
+  const { refreshControl } = usePullToRefresh([refetch]);
 
   const renderItem = ({ item }: { item: any }) => (
     <ProductCard
@@ -69,6 +72,7 @@ export default function CategoryDetail() {
         contentContainerStyle={styles.listContent}
         columnWrapperStyle={isLoading ? styles.row : styles.row}
         showsVerticalScrollIndicator={false}
+        refreshControl={refreshControl}
         ListHeaderComponent={
           isLoading ? (
             <View

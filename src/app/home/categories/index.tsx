@@ -3,6 +3,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { useTheme } from "@/hooks/use-theme";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import Skeleton from "@/components/Skeleton";
 import { useGetCategoryListQuery } from "@/store/admin/category";
 
@@ -10,7 +11,9 @@ const SKELETON_COUNT = 8;
 
 export default function CategoriesIndex() {
   const theme = useTheme();
-  const { data: categorylist, isLoading } = useGetCategoryListQuery();
+  const { data: categorylist, isLoading, refetch } = useGetCategoryListQuery();
+
+  const { refreshControl } = usePullToRefresh([refetch]);
 
   const skeletonData = Array.from({ length: SKELETON_COUNT });
 
@@ -21,6 +24,7 @@ export default function CategoriesIndex() {
         keyExtractor={(item, index) => (isLoading ? `skeleton-${index}` : item.id.toString())}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={refreshControl}
         ListHeaderComponent={
           <Text style={[styles.headerTitle, { color: theme.text }]}>
             All Categories

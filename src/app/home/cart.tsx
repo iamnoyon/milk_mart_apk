@@ -9,9 +9,11 @@ import {
   TextInput,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import Toast from "react-native-toast-message";
 import { useDispatch, useSelector } from "react-redux";
 import { useTheme } from "@/hooks/use-theme";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import {
   incrementQuantity,
   decrementQuantity,
@@ -32,6 +34,8 @@ export default function CartTab() {
   const dispatch = useDispatch();
 
   const items = useSelector((state: any) => state.cart.items);
+
+  const { refreshControl } = usePullToRefresh();
 
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<{
@@ -88,50 +92,55 @@ export default function CartTab() {
         },
       ]}
     >
-      <View
-        style={[styles.imageWrap, { backgroundColor: theme.backgroundElement }]}
+      <Pressable
+        onPress={() => router.push(`/home/categories/product/${item.id}`)}
+        style={({ pressed }) => [
+          styles.imageWrap,
+          { backgroundColor: theme.backgroundElement },
+          { transform: [{ scale: pressed ? 0.95 : 1 }] },
+        ]}
       >
         <Image
           source={{ uri: item.image }}
           style={styles.image}
           contentFit="cover"
         />
-      </View>
+      </Pressable>
 
       <View style={styles.info}>
-        <Text
-          style={[styles.name, { color: theme.text }]}
-          numberOfLines={1}
-        >
-          {item.name}
-        </Text>
-        <Text style={[styles.weight, { color: theme.textSecondary }]}>
-          {item.weight} {item.weight_type}
-        </Text>
-        <Text style={styles.price}>৳{(item.price * item.quantity).toFixed(2)}</Text>
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text
+            style={[styles.name, { color: theme.text }]}
+            numberOfLines={1}
+          >
+            {item.name}
+          </Text>
+          <Text style={[styles.weight, { color: theme.textSecondary }]}>
+            {item.weight} {item.weight_type}
+          </Text>
+          <Text style={styles.price}>৳{(item.price * item.quantity).toFixed(2)}</Text>
+        </View>
 
-        <View style={styles.qtyRow}>
-          <View style={styles.qtyControls}>
-            <Pressable
-              onPress={() => dispatch(decrementQuantity(item.id))}
-              style={[styles.qtyBtn, { backgroundColor: theme.backgroundElement }]}
-            >
-              <MaterialCommunityIcons
-                name={item.quantity <= 1 ? "trash-can-outline" : "minus"}
-                size={16}
-                color={theme.text}
-              />
-            </Pressable>
-            <Text style={[styles.qtyText, { color: theme.text }]}>
-              {item.quantity}
-            </Text>
-            <Pressable
-              onPress={() => dispatch(incrementQuantity(item.id))}
-              style={[styles.qtyBtn, { backgroundColor: theme.backgroundElement }]}
-            >
-              <MaterialCommunityIcons name="plus" size={16} color={theme.text} />
-            </Pressable>
-          </View>
+        <View style={styles.qtyControls}>
+          <Pressable
+            onPress={() => dispatch(decrementQuantity(item.id))}
+            style={[styles.qtyBtn, { backgroundColor: theme.backgroundElement }]}
+          >
+            <MaterialCommunityIcons
+              name={item.quantity <= 1 ? "trash-can-outline" : "minus"}
+              size={16}
+              color={theme.text}
+            />
+          </Pressable>
+          <Text style={[styles.qtyText, { color: theme.text }]}>
+            {item.quantity}
+          </Text>
+          <Pressable
+            onPress={() => dispatch(incrementQuantity(item.id))}
+            style={[styles.qtyBtn, { backgroundColor: theme.backgroundElement }]}
+          >
+            <MaterialCommunityIcons name="plus" size={16} color={theme.text} />
+          </Pressable>
         </View>
       </View>
 
@@ -190,6 +199,7 @@ export default function CartTab() {
         renderItem={renderItem}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
+        refreshControl={refreshControl}
       />
 
       <View
@@ -348,7 +358,10 @@ const styles = StyleSheet.create({
   },
   info: {
     flex: 1,
-    gap: 4,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    gap: 8,
   },
   name: {
     fontSize: 15,
@@ -363,15 +376,10 @@ const styles = StyleSheet.create({
     color: "#57810d",
     marginTop: 4,
   },
-  qtyRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 6,
-  },
   qtyControls: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 6,
   },
   qtyBtn: {
     width: 28,

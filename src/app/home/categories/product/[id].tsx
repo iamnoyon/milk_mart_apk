@@ -13,6 +13,7 @@ import { Image } from "expo-image";
 import { useDispatch } from "react-redux";
 import Toast from "react-native-toast-message";
 import { useTheme } from "@/hooks/use-theme";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import Skeleton from "@/components/Skeleton";
 import { useGetProductbyIdQuery } from "@/store/admin/products";
 import { addToCart } from "@/store/cart";
@@ -25,10 +26,12 @@ export default function ProductDetail() {
   const [added, setAdded] = useState(false);
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  const { data: productData, isLoading } = useGetProductbyIdQuery(
+  const { data: productData, isLoading, refetch } = useGetProductbyIdQuery(
     { id },
     { skip: !id }
   );
+
+  const { refreshControl } = usePullToRefresh([refetch]);
 
   const product = productData?.data;
 
@@ -66,7 +69,7 @@ export default function ProductDetail() {
       type: "success",
       text1: "Added to cart",
       text2: `${quantity} × ${product.name}`,
-      position: "bottom",
+      position: "top",
       visibilityTime: 1500,
     });
 
@@ -76,7 +79,7 @@ export default function ProductDetail() {
   if (isLoading) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView showsVerticalScrollIndicator={false} refreshControl={refreshControl}>
           <Skeleton width="100%" height={280} borderRadius={0} />
 
           <View style={styles.content}>
@@ -140,7 +143,7 @@ export default function ProductDetail() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} refreshControl={refreshControl}>
         <View style={[styles.imageWrap, { backgroundColor: theme.backgroundElement }]}>
           <Image
             source={{ uri: product?.image }}

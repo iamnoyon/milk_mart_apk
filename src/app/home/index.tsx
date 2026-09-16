@@ -15,6 +15,7 @@ import { router } from "expo-router";
 import { Image } from "expo-image";
 import { useDispatch } from "react-redux";
 import { useTheme } from "@/hooks/use-theme";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import ProductCard from "@/components/ProductCard";
 import Skeleton from "@/components/Skeleton";
 import { addToCart } from "@/store/cart";
@@ -37,8 +38,10 @@ export default function HomeTab() {
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
 
-  const { data: categoryData, isLoading: categoryLoading } = useGetCategoryListQuery({})
-  const { data: productList, isLoading: productLoading } = useGetProductListQuery({})
+  const { data: categoryData, isLoading: categoryLoading, refetch: refetchCategories } = useGetCategoryListQuery({})
+  const { data: productList, isLoading: productLoading, refetch: refetchProducts } = useGetProductListQuery({})
+
+  const { refreshControl } = usePullToRefresh([refetchCategories, refetchProducts]);
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
@@ -46,7 +49,11 @@ export default function HomeTab() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: theme.background }]}
+      contentContainerStyle={{ flexGrow: 1 }}
+      refreshControl={refreshControl}
+    >
       {/* Search Bar */}
       <View style={[styles.searchBox, { backgroundColor: theme.backgroundElement }]}>
         <MaterialCommunityIcons name="magnify" size={20} color={theme.textSecondary} />
@@ -104,20 +111,43 @@ export default function HomeTab() {
                   <Skeleton width={44} height={10} borderRadius={4} style={{ marginTop: 6 }} />
                 </View>
               ))
-            : categoryData?.data?.map((cat) => (
-                <Pressable
-                  key={cat.id}
-                  onPress={() => cat?.name === "More" ? router.push("/home/categories") : router.push({ pathname: `/home/categories/${cat.id}`, params: { name: cat.name } })}
-                  style={styles.categoryItem}
-                >
-                  <View style={[styles.iconBg, { backgroundColor: '#e9f3d8' }]}>
-                    <MaterialCommunityIcons name={cat.icon as any} size={24} color='#4e7707' />
-                  </View>
-                  <Text style={[styles.categoryName, { color: theme.text }]} numberOfLines={1}>
-                    {cat.name}
-                  </Text>
-                </Pressable>
-              ))}
+            : (() => {
+                const categories = categoryData?.data ?? [];
+                const visible = categories.slice(0, 4);
+                const hasMore = categories.length > 4;
+                return (
+                  <>
+                    {visible.map((cat) => (
+                      <Pressable
+                        key={cat.id}
+                        onPress={() => router.push({ pathname: `/home/categories/${cat.id}`, params: { name: cat.name } })}
+                        style={styles.categoryItem}
+                      >
+                        <View style={[styles.iconBg, { backgroundColor: '#e9f3d8' }]}>
+                          <MaterialCommunityIcons name={cat.icon as any} size={32} color='#4e7707' />
+                        </View>
+                        <Text style={[styles.categoryName, { color: theme.text }]} numberOfLines={1}>
+                          {cat.name}
+                        </Text>
+                      </Pressable>
+                    ))}
+                    {hasMore && (
+                      <Pressable
+                        key="more"
+                        onPress={() => router.push("/home/categories")}
+                        style={styles.categoryItem}
+                      >
+                        <View style={[styles.iconBg, { backgroundColor: '#e9f3d8' }]}>
+                          <MaterialCommunityIcons name="dots-grid" size={24} color='#4e7707' />
+                        </View>
+                        <Text style={[styles.categoryName, { color: theme.text }]} numberOfLines={1}>
+                          More
+                        </Text>
+                      </Pressable>
+                    )}
+                  </>
+                );
+              })()}
         </View>
       </View>
 
@@ -127,11 +157,13 @@ export default function HomeTab() {
           <Text style={[styles.sectionTitle, { color: theme.text }]}>
             Best Seller
           </Text>
-          <Pressable onPress={() => router.push("/home/categories/product")}>
-            <Text style={[styles.seeMore, { color: '#57810d' }]}>
-              See more
-            </Text>
-          </Pressable>
+          {(productList?.data?.length ?? 0) > 2 && (
+            <Pressable onPress={() => router.push("/home/categories/product")}>
+              <Text style={[styles.seeMore, { color: '#57810d' }]}>
+                See more
+              </Text>
+            </Pressable>
+          )}
         </View>
 
         <ScrollView
@@ -194,7 +226,7 @@ export default function HomeTab() {
           />
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -254,7 +286,7 @@ const styles = StyleSheet.create({
   },
   categoryRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    gap: 8,
   },
   categoryItem: {
     alignItems: "center",

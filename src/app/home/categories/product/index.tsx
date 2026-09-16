@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDispatch } from "react-redux";
 import { useTheme } from "@/hooks/use-theme";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import ProductCard from "@/components/ProductCard";
 import Skeleton from "@/components/Skeleton";
 import { useGetCategoryListQuery } from "@/store/admin/category";
@@ -23,6 +24,8 @@ export default function ProductIndex() {
   const { data: categoryData } = useGetCategoryListQuery();
   const [trigger, { data: productsData, isFetching }] =
     useLazyGetProductsByCategoryIdQuery();
+
+  const { refreshControl } = usePullToRefresh([() => trigger({ id: selectedCategory }, true)]);
 
   useEffect(() => {
     trigger({ id: selectedCategory });
@@ -81,6 +84,7 @@ export default function ProductIndex() {
         contentContainerStyle={styles.listContent}
         columnWrapperStyle={styles.row}
         showsVerticalScrollIndicator={false}
+        refreshControl={refreshControl}
         ListHeaderComponent={
           <View style={styles.filterHeader}>
             <Text style={[styles.headerTitle, { color: theme.text }]}>
