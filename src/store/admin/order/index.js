@@ -24,6 +24,13 @@ export const orderSlice = apiSlice.injectEndpoints({
         method: "GET",
       }),
     }),
+    getMyOrders: builder.query({
+      query: () => ({
+        url: "/orders/my",
+        method: "GET",
+      }),
+      providesTags: ["Orders"],
+    }),
   }),
   overrideExisting: true,
 });
@@ -32,4 +39,5 @@ export const {
   useApplyCouponMutation,
   usePlaceOrderMutation,
   useGetOrderQuery,
+  useGetMyOrdersQuery,
 } = orderSlice;
