@@ -22,8 +22,6 @@ import {
 } from "@/store/cart";
 import { useApplyCouponMutation } from "@/store/admin/order"
 
-const DELIVERY_FEE = 50;
-
 export default function CartTab() {
   const theme = useTheme();
   const dispatch = useDispatch();
@@ -50,7 +48,7 @@ export default function CartTab() {
   );
 
   const discount = appliedCoupon?.discount ?? 0;
-  const total = Math.max(0, subtotal - discount + DELIVERY_FEE);
+  const total = Math.max(0, subtotal - discount);
 
   const handleApplyCoupon = async () => {
     const code = couponCode.trim().toUpperCase();
@@ -309,15 +307,6 @@ export default function CartTab() {
           </View>
         )}
 
-        <View style={styles.summaryRow}>
-          <Text style={[styles.summaryLabel, { color: theme.textSecondary }]}>
-            Delivery Fee
-          </Text>
-          <Text style={[styles.summaryValue, { color: theme.text }]}>
-            ৳{DELIVERY_FEE.toFixed(2)}
-          </Text>
-        </View>
-
         <View
           style={[styles.divider, { backgroundColor: theme.backgroundElement }]}
         />
@@ -328,6 +317,7 @@ export default function CartTab() {
         </View>
 
         <Pressable
+          onPress={() => router.push("/checkout")}
           style={({ pressed }) => [
             styles.checkoutBtn,
             { transform: [{ scale: pressed ? 0.98 : 1 }] },
