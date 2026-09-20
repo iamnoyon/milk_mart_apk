@@ -66,7 +66,7 @@ export default function ProductCard({
       type: "success",
       text1: "Added to cart",
       text2: product.name,
-      position: "bottom",
+      position: "top",
       visibilityTime: 1500,
     });
 

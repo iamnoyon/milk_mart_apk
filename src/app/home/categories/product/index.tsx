@@ -21,11 +21,13 @@ export default function ProductIndex() {
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [showFilter, setShowFilter] = useState(false);
 
-  const { data: categoryData } = useGetCategoryListQuery();
+  const { data: categoryData } = useGetCategoryListQuery({});
   const [trigger, { data: productsData, isFetching }] =
-    useLazyGetProductsByCategoryIdQuery();
+    useLazyGetProductsByCategoryIdQuery({});
 
   const { refreshControl } = usePullToRefresh([() => trigger({ id: selectedCategory }, true)]);
+
+  console.log(productsData)
 
   useEffect(() => {
     trigger({ id: selectedCategory });

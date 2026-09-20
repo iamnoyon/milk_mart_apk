@@ -20,20 +20,18 @@ import {
   removeFromCart,
   clearCart,
 } from "@/store/cart";
+import { useApplyCouponMutation } from "@/store/admin/order"
 
 const DELIVERY_FEE = 50;
-
-const COUPONS: Record<string, { type: "percent" | "flat"; value: number; label: string }> = {
-  SAVE10: { type: "percent", value: 10, label: "10% off" },
-  FLAT50: { type: "flat", value: 50, label: "৳50 off" },
-  WELCOME: { type: "percent", value: 20, label: "20% off" },
-};
 
 export default function CartTab() {
   const theme = useTheme();
   const dispatch = useDispatch();
 
   const items = useSelector((state: any) => state.cart.items);
+
+  // API Calling
+  const [ApplyCoupon, { isLoading: applyCouponeLoading }] = useApplyCouponMutation();
 
   const { refreshControl } = usePullToRefresh();
 
@@ -54,32 +52,58 @@ export default function CartTab() {
   const discount = appliedCoupon?.discount ?? 0;
   const total = Math.max(0, subtotal - discount + DELIVERY_FEE);
 
-  const handleApplyCoupon = () => {
+  const handleApplyCoupon = async () => {
     const code = couponCode.trim().toUpperCase();
     if (!code) {
-      Toast.show({ type: "error", text1: "Enter a coupon code", position: "bottom" });
+      Toast.show({ type: "error", text1: "Enter a coupon code", position: "top" });
       return;
     }
-    const coupon = COUPONS[code];
-    if (!coupon) {
-      Toast.show({ type: "error", text1: "Invalid coupon code", position: "bottom" });
+    if (items.length === 0) {
+      Toast.show({ type: "error", text1: "Cart is empty", position: "top" });
       return;
     }
-    const discountValue =
-      coupon.type === "percent" ? (subtotal * coupon.value) / 100 : coupon.value;
-    setAppliedCoupon({ code, ...coupon, discount: discountValue });
-    setCouponCode("");
-    Toast.show({
-      type: "success",
-      text1: "Coupon applied",
-      text2: `${coupon.label} on this order`,
-      position: "bottom",
-    });
+
+    const payload = {
+      coupon_code: code,
+      products: items.map((item: any) => ({
+        id: item.id,
+        quantity: item.quantity,
+      })),
+    };
+    console.log(payload)
+
+    try {
+      const res: any = await ApplyCoupon(payload).unwrap();
+      const data = res?.data ?? {};
+      const originalTotal = Number(data.total ?? subtotal);
+      const finalPrice = Number(data.final_price ?? originalTotal);
+      const discountValue = Math.max(0, originalTotal - finalPrice);
+      const returnedCode = data.coupon_code ?? code;
+
+      setAppliedCoupon({
+        code: returnedCode,
+        type: "flat",
+        value: discountValue,
+        label: res?.message ?? "Coupon applied",
+        discount: discountValue,
+      });
+      setCouponCode("");
+      Toast.show({
+        type: "success",
+        text1: "Coupon applied",
+        text2: res?.message ?? `${returnedCode} applied`,
+        position: "top",
+      });
+    } catch (err: any) {
+      const message =
+        err?.data?.message ?? err?.data?.detail ?? "Invalid or expired coupon";
+      Toast.show({ type: "error", text1: message, position: "top" });
+    }
   };
 
   const handleRemoveCoupon = () => {
     setAppliedCoupon(null);
-    Toast.show({ type: "info", text1: "Coupon removed", position: "bottom" });
+    Toast.show({ type: "info", text1: "Coupon removed", position: "top" });
   };
 
   const renderItem = ({ item }: { item: any }) => (
@@ -252,12 +276,15 @@ export default function CartTab() {
             />
             <Pressable
               onPress={handleApplyCoupon}
+              disabled={applyCouponeLoading}
               style={({ pressed }) => [
                 styles.applyBtn,
-                { opacity: pressed ? 0.85 : 1 },
+                { opacity: applyCouponeLoading || pressed ? 0.6 : 1 },
               ]}
             >
-              <Text style={styles.applyBtnText}>Apply Coupon</Text>
+              <Text style={styles.applyBtnText}>
+                {applyCouponeLoading ? "Applying..." : "Apply Coupon"}
+              </Text>
             </Pressable>
           </View>
         )}
