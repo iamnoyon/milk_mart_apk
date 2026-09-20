@@ -31,9 +31,8 @@ function formatDate(iso?: string) {
 }
 
 export default function OrdersTab() {
-  const { data, isLoading, isError, refetch } = useGetMyOrdersQuery({});
+  const { data, isLoading, isError, refetch, error } = useGetMyOrdersQuery();
   const orders: any[] = Array.isArray(data?.data) ? data!.data : [];
-  console.log(data)
 
   const { refreshControl } = usePullToRefresh([refetch]);
 
@@ -79,21 +78,12 @@ export default function OrdersTab() {
     );
   };
 
-  return (
-    <SafeAreaView style={styles.container} edges={["bottom"]}>
-      <View style={styles.header}>
-        <Text style={styles.title}>My Orders</Text>
-        <Text style={styles.subtitle}>
-          {isLoading ? "Loading..." : `${orders.length} order${orders.length === 1 ? "" : "s"}`}
-        </Text>
-      </View>
-
+  const ListEmpty = (
+    <View style={styles.center}>
       {isLoading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#57810d" />
-        </View>
+        <ActivityIndicator size="large" color="#57810d" />
       ) : isError ? (
-        <View style={styles.center}>
+        <>
           <MaterialCommunityIcons
             name="alert-circle-outline"
             size={56}
@@ -103,9 +93,9 @@ export default function OrdersTab() {
           <Pressable style={styles.retryBtn} onPress={() => refetch()}>
             <Text style={styles.retryText}>Retry</Text>
           </Pressable>
-        </View>
-      ) : orders.length === 0 ? (
-        <View style={styles.center}>
+        </>
+      ) : (
+        <>
           <View style={styles.emptyIcon}>
             <MaterialCommunityIcons
               name="clipboard-text-outline"
@@ -117,17 +107,32 @@ export default function OrdersTab() {
           <Text style={styles.emptySub}>
             Your placed orders will appear here
           </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={orders}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderOrder}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
-          refreshControl={refreshControl}
-        />
+        </>
       )}
+    </View>
+  );
+
+  return (
+    <SafeAreaView style={styles.container} edges={["bottom"]}>
+      <View style={styles.header}>
+        <Text style={styles.title}>My Orders</Text>
+        <Text style={styles.subtitle}>
+          {isLoading ? "Loading..." : `${orders.length} order${orders.length === 1 ? "" : "s"}`}
+        </Text>
+      </View>
+
+      <FlatList
+        data={orders}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderOrder}
+        contentContainerStyle={[
+          styles.list,
+          orders.length === 0 && styles.listEmpty,
+        ]}
+        showsVerticalScrollIndicator={false}
+        refreshControl={refreshControl}
+        ListEmptyComponent={ListEmpty}
+      />
     </SafeAreaView>
   );
 }
@@ -155,6 +160,11 @@ const styles = StyleSheet.create({
   list: {
     paddingHorizontal: 16,
     paddingBottom: 24,
+    flexGrow: 1,
+  },
+  listEmpty: {
+    flexGrow: 1,
+    justifyContent: "center",
   },
   card: {
     backgroundColor: "#F0F0F3",

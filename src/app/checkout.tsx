@@ -46,7 +46,7 @@ export default function CheckoutScreen() {
       Toast.show({
         type: "error",
         text1: "Cart is empty",
-        position: "bottom",
+        position: "top",
       });
       return;
     }
@@ -69,7 +69,7 @@ export default function CheckoutScreen() {
         type: "success",
         text1: "Order placed",
         text2: res?.message ?? "Your order has been placed successfully",
-        position: "bottom",
+        position: "top",
       });
       if (orderId !== undefined && orderId !== null) {
         router.replace(`/order/${orderId}`);
@@ -81,7 +81,7 @@ export default function CheckoutScreen() {
         err?.data?.message ??
         err?.data?.detail ??
         "Failed to place order. Please try again.";
-      Toast.show({ type: "error", text1: message, position: "bottom" });
+      Toast.show({ type: "error", text1: message, position: "top" });
     }
   };
 
