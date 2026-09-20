@@ -7,9 +7,12 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import { useSelector } from "react-redux";
+import { router, useLocalSearchParams } from "expo-router";
+import { useSelector, useDispatch } from "react-redux";
+import Toast from "react-native-toast-message";
 import { useTheme } from "@/hooks/use-theme";
+import { usePlaceOrderMutation } from "@/store/admin/order";
+import { clearCart } from "@/store/cart";
 
 const DELIVERY_FEE = 50;
 
@@ -21,13 +24,66 @@ const ADDRESS = {
 
 export default function CheckoutScreen() {
   const theme = useTheme();
+  const dispatch = useDispatch();
   const items = useSelector((state: any) => state.cart.items);
+  const { coupon_code, final_price } = useLocalSearchParams<{
+    coupon_code?: string;
+    final_price?: string;
+  }>();
 
-  const subtotal = items.reduce(
+  const [PlaceOrder, { isLoading: placeOrderLoading }] = usePlaceOrderMutation();
+
+  const rawSubtotal = items.reduce(
     (sum: number, item: any) => sum + item.price * item.quantity,
     0
   );
+  const subtotal =
+    final_price && final_price !== "" ? Number(final_price) : rawSubtotal;
   const total = subtotal + DELIVERY_FEE;
+
+  const handlePlaceOrder = async () => {
+    if (items.length === 0) {
+      Toast.show({
+        type: "error",
+        text1: "Cart is empty",
+        position: "bottom",
+      });
+      return;
+    }
+
+    const payload = {
+      products: items.map((item: any) => ({
+        id: item.id,
+        quantity: item.quantity,
+      })),
+      coupon_code: coupon_code ?? "",
+      delivery_fee: DELIVERY_FEE,
+      payment_method: "cash_on_delivery",
+    };
+
+    try {
+      const res: any = await PlaceOrder(payload).unwrap();
+      const orderId = res?.data?.id;
+      dispatch(clearCart());
+      Toast.show({
+        type: "success",
+        text1: "Order placed",
+        text2: res?.message ?? "Your order has been placed successfully",
+        position: "bottom",
+      });
+      if (orderId !== undefined && orderId !== null) {
+        router.replace(`/order/${orderId}`);
+      } else {
+        router.replace("/home/orders");
+      }
+    } catch (err: any) {
+      const message =
+        err?.data?.message ??
+        err?.data?.detail ??
+        "Failed to place order. Please try again.";
+      Toast.show({ type: "error", text1: message, position: "bottom" });
+    }
+  };
 
   return (
     <SafeAreaView
@@ -155,9 +211,19 @@ export default function CheckoutScreen() {
               Subtotal ({items.length} items)
             </Text>
             <Text style={[styles.summaryValue, { color: theme.text }]}>
-              ৳{subtotal.toFixed(2)}
+              ৳{rawSubtotal.toFixed(2)}
             </Text>
           </View>
+          {coupon_code && (
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, { color: "#57810d" }]}>
+                Coupon ({coupon_code})
+              </Text>
+              <Text style={[styles.summaryValue, { color: "#57810d" }]}>
+                -৳{(rawSubtotal - subtotal).toFixed(2)}
+              </Text>
+            </View>
+          )}
           <View style={styles.summaryRow}>
             <Text style={[styles.summaryLabel, { color: theme.textSecondary }]}>
               Delivery Fee
@@ -191,12 +257,19 @@ export default function CheckoutScreen() {
         ]}
       >
         <Pressable
+          onPress={handlePlaceOrder}
+          disabled={placeOrderLoading}
           style={({ pressed }) => [
             styles.placeOrderBtn,
-            { transform: [{ scale: pressed ? 0.98 : 1 }] },
+            {
+              opacity: placeOrderLoading || pressed ? 0.7 : 1,
+              transform: [{ scale: pressed ? 0.98 : 1 }],
+            },
           ]}
         >
-          <Text style={styles.placeOrderText}>Place Order</Text>
+          <Text style={styles.placeOrderText}>
+            {placeOrderLoading ? "Placing Order..." : "Place Order"}
+          </Text>
         </Pressable>
       </View>
     </SafeAreaView>

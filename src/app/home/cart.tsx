@@ -317,7 +317,15 @@ export default function CartTab() {
         </View>
 
         <Pressable
-          onPress={() => router.push("/checkout")}
+          onPress={() =>
+            router.push({
+              pathname: "/checkout",
+              params: {
+                coupon_code: appliedCoupon?.code ?? "",
+                final_price: Math.max(0, subtotal - discount).toFixed(2),
+              },
+            })
+          }
           style={({ pressed }) => [
             styles.checkoutBtn,
             { transform: [{ scale: pressed ? 0.98 : 1 }] },
