@@ -74,7 +74,7 @@ export default function CategoriesIndex() {
                 <Image
                   source={{ uri: item?.image }}
                   style={styles.image}
-                  contentFit="contain"
+                  contentFit="cover"
                 />
               </View>
 
@@ -118,15 +118,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderRadius: 14,
-    padding: 10,
+    borderRadius: 10,
+    paddingHorizontal: 7,
+    paddingVertical: 5,
     marginBottom: 12,
     gap: 12,
   },
   imageWrap: {
     width: 56,
     height: 56,
-    borderRadius: 12,
+    borderRadius: 8,
     overflow: "hidden",
     justifyContent: "center",
     alignItems: "center",

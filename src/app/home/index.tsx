@@ -53,6 +53,8 @@ export default function HomeTab() {
       style={[styles.container, { backgroundColor: theme.background }]}
       contentContainerStyle={{ flexGrow: 1 }}
       refreshControl={refreshControl}
+      scrollEnabled={false}
+      showsVerticalScrollIndicator={false}
     >
       {/* Search Bar */}
       <View style={[styles.searchBox, { backgroundColor: theme.backgroundElement }]}>
