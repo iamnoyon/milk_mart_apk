@@ -6,6 +6,7 @@ const initialState = {
   email: "",
   role: "",
   profileImageUrl: "",
+  profile_image: "",
   permissions: null,
   token: null,
 };
@@ -25,6 +26,11 @@ const userSlice = createSlice({
       state.token = action.payload;
     },
 
+    setProfileImageUrl: (state, action) => {
+      state.profileImageUrl = action.payload;
+      state.profile_image = action.payload;
+    },
+
     clearUser: () => {
       return initialState;
     },
@@ -35,6 +41,7 @@ const userSlice = createSlice({
   },
 });
 
-export const { setUser, setToken, clearUser, clearToken } = userSlice.actions;
+export const { setUser, setToken, setProfileImageUrl, clearUser, clearToken } =
+  userSlice.actions;
 
 export default userSlice.reducer;

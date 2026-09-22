@@ -9,6 +9,7 @@
     "@react-native-picker/picker": "2.11.4",
     "@reduxjs/toolkit": "^2.12.0",
     "expo": "~57.0.24",
+    "expo-blob": "^57.0.2",
     "expo-constants": "~57.0.17",
     "expo-device": "~57.0.2",
     "expo-font": "~57.0.3",

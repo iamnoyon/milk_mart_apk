@@ -1,13 +1,16 @@
 import { useAuth } from "@/components/Auth/AuthProvider";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
+import { useGetProfileQuery, useUpdateProfilePhotoMutation } from "@/store/auth";
+import { setProfileImageUrl } from "@/store/user";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useSelector } from "react-redux";
+import Toast from "react-native-toast-message";
+import { useDispatch, useSelector } from "react-redux";
 
 interface UserData {
   area?: string;
@@ -26,7 +29,7 @@ interface UserState {
   email?: string;
   id?: number | string;
   name?: string;
-  profileImageUrl?: string;
+  profile_image?: string;
   role?: string;
   data?: UserData;
   token?: string;
@@ -59,8 +62,9 @@ const InfoRow = ({
           color="#57810d"
         />
       </View>
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, minWidth: 0 }}>
         <Text
+          numberOfLines={1}
           style={
             compact ? infoRowStyles.labelCompact : infoRowStyles.label
           }
@@ -68,6 +72,7 @@ const InfoRow = ({
           {label}
         </Text>
         <Text
+          numberOfLines={1}
           style={
             compact ? infoRowStyles.valueCompact : infoRowStyles.value
           }
@@ -124,32 +129,57 @@ const infoRowStyles = {
     fontSize: 15,
     color: "#222",
     fontWeight: "500" as const,
+    flexShrink: 1,
   },
   valueCompact: {
     fontSize: 14,
     color: "#222",
     fontWeight: "500" as const,
+    flexShrink: 1,
   },
 };
 
 export default function ProfileTab() {
   const { logout } = useAuth();
-  const { refreshControl } = usePullToRefresh();
+  const dispatch = useDispatch();
+  const [uploading, setUploading] = useState(false);
+  const [UpdateProfilePhoto] = useUpdateProfilePhotoMutation()
 
+  const { data: profileResponse, refetch } = useGetProfileQuery();
+  const { refreshControl } = usePullToRefresh([refetch]);
   const state = useSelector(
     (state: { user?: UserState }) => state.user
   );
 
-  const profile = state?.data ?? {};
-  const fullName = profile.name ?? state?.name ?? "";
-  const phone = profile.phone ?? "";
-  const role = profile.role ?? state?.role ?? "";
-  const verified = !!profile.verified;
-  const userId = profile.id ?? state?.id;
-  const profileImageUrl = state?.profileImageUrl ?? "";
+  useEffect(() => {
+    if (profileResponse && Object.keys(profileResponse).length > 0) {
+      dispatch({ type: "user/setUser", payload: profileResponse });
+    }
+  }, [profileResponse, dispatch]);
 
-  const [localImageUri, setLocalImageUri] = useState<string | null>(null);
-  const displayImageUri = localImageUri || profileImageUrl;
+  const profile = (profileResponse as any)?.data ?? state?.data ?? {};
+  const fullName =
+    profile.name ??
+    (profileResponse as any)?.name ??
+    state?.name ??
+    "";
+  const phone = profile.phone ?? "";
+  const role =
+    profile.role ??
+    (profileResponse as any)?.role ??
+    state?.role ??
+    "";
+  const verified = !!profile.verified;
+  const userId = profile.id ?? (profileResponse as any)?.id ?? state?.id;
+  const profileImageUrl =
+    profile.profile_image ??
+    state?.profile_image ??
+    (profileResponse as any)?.profile_image ??
+    state?.profileImageUrl ??
+    (profileResponse as any)?.profileImageUrl ??
+    "";
+
+  const displayImageUri = profileImageUrl;
 
   const initials = fullName
     .split(" ")
@@ -157,16 +187,6 @@ export default function ProfileTab() {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join("");
-
-  const address = [
-    profile.house,
-    profile.flat,
-    profile.avenue ? `Avenue ${profile.avenue}` : null,
-    profile.road ? `Road ${profile.road}` : null,
-    profile.area,
-  ]
-    .filter(Boolean)
-    .join(", ");
 
   const handleLogout = async () => {
     await logout();
@@ -192,24 +212,125 @@ export default function ProfileTab() {
       quality: 0.8,
     });
 
-    if (!result.canceled && result.assets[0]?.uri) {
-      setLocalImageUri(result.assets[0].uri);
+    if (result.canceled || !result.assets[0]?.uri) return;
+
+    const asset = result.assets[0];
+    setUploading(true);
+
+    try {
+      const fileName = asset.fileName ?? `avatar-${Date.now()}.jpg`;
+      const fileType = asset.mimeType ?? "image/jpeg";
+      const token = state?.token;
+
+      const formData = new FormData();
+      formData.append("file", {
+        uri: asset.uri,
+        name: fileName,
+        type: fileType,
+      } as any);
+
+      const xhr = new XMLHttpRequest();
+      const uploadResult: {
+        ok: boolean;
+        status: number;
+        body: any;
+      } = await new Promise((resolve, reject) => {
+        xhr.open(
+          "POST",
+          "https://fmd-6pes.onrender.com/upload/?folder=uploads"
+        );
+        if (token) {
+          xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+        }
+
+        xhr.onload = () => {
+          let body: any = null;
+          try {
+            body = JSON.parse(xhr.responseText);
+          } catch {
+            body = xhr.responseText;
+          }
+          resolve({ ok: xhr.status >= 200 && xhr.status < 300, status: xhr.status, body });
+        };
+        xhr.onerror = () => reject(new Error("Network error during upload"));
+        xhr.send(formData as any);
+      });
+
+      if (!uploadResult.ok) {
+        console.error(
+          "Avatar upload failed:",
+          uploadResult.status,
+          uploadResult.body
+        );
+        Alert.alert(
+          "Upload failed",
+          `Server returned ${uploadResult.status}.`
+        );
+        return;
+      }
+
+      const uploadData = uploadResult.body;
+      const url =
+        uploadData?.url ??
+        uploadData?.data?.url ??
+        uploadData?.fileUrl ??
+        uploadData?.data?.fileUrl ??
+        uploadData?.profile_image ??
+        uploadData?.data?.profile_image ??
+        null;
+
+      console.log("Uploaded avatar URL:", url ?? uploadData);
+
+      if (url) {
+        dispatch(setProfileImageUrl(url));
+        UpdateProfilePhoto({
+          "profile_image": url
+        })
+          .unwrap()
+          .then(res => {
+            Toast.show({
+              type: "success",
+              text1: "Profile Phote uploaded",
+              position: "top",
+              visibilityTime: 1500,
+            });
+          })
+          .catch(err => {
+            console.log(err)
+            Toast.show({
+              type: "error",
+              text1: "Failed profile phote uploading.",
+              position: "top",
+              visibilityTime: 1500,
+            });
+          })
+      }
+    } catch (error) {
+      console.error("Avatar upload failed:", error);
+      Alert.alert("Upload failed", "Unable to upload your avatar. Please try again.");
+    } finally {
+      setUploading(false);
     }
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#FEFEFE" }}>
+    <SafeAreaView edges={["bottom"]} style={{ flex: 1, backgroundColor: "#FEFEFE", overflow: "hidden" }}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
         refreshControl={refreshControl}
+        showsHorizontalScrollIndicator={false}
+        horizontal={false}
+        scrollEnabled={false}
       >
         <View style={styles.header}>
-          <Pressable
+
+        <Pressable
             onPress={handlePickImage}
+            disabled={uploading}
             style={({ pressed }) => [
               styles.avatarWrap,
-              { opacity: pressed ? 0.85 : 1 },
+              { opacity: pressed || uploading ? 0.85 : 1 },
             ]}
           >
             {displayImageUri ? (
@@ -227,7 +348,7 @@ export default function ProfileTab() {
             )}
             <View style={styles.editBadge}>
               <MaterialCommunityIcons
-                name="camera"
+                name={uploading ? "cloud-upload" : "camera"}
                 size={14}
                 color="#fff"
               />
@@ -253,12 +374,8 @@ export default function ProfileTab() {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Contact</Text>
+          <Text style={styles.sectionTitle}>Contact & Address</Text>
           <InfoRow icon="phone" label="Phone" value={phone} />
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Address</Text>
           <View style={styles.gridRow}>
             <View style={styles.gridCol}>
               <InfoRow icon="home-city" label="Area" value={profile.area} compact />
@@ -281,18 +398,25 @@ export default function ProfileTab() {
             </View>
             <View style={styles.gridCol} />
           </View>
-          {address ? (
-            <View style={{ marginTop: 10 }}>
-              <Text style={styles.fullAddressLabel}>Full Address</Text>
-              <Text style={styles.fullAddress}>{address}</Text>
+          <View style={styles.loyaltyBanner}>
+            <View style={styles.loyaltyBannerHeader}>
+              <View style={styles.loyaltyIconWrap}>
+                <MaterialCommunityIcons
+                  name="star-circle"
+                  size={14}
+                  color="#fff"
+                />
+              </View>
+              <Text style={styles.loyaltyBannerTitle}>Loyalty Points</Text>
             </View>
-          ) : null}
+            <Text style={styles.loyaltyValue}>—</Text>
+          </View>
         </View>
 
         <Pressable
           onPress={handleLogout}
           style={({ pressed }) => ({
-            marginTop: 24,
+            marginTop: 14,
             marginHorizontal: 24,
             height: 50,
             borderRadius: 12,
@@ -328,11 +452,9 @@ export default function ProfileTab() {
 const styles = {
   header: {
     alignItems: "center" as const,
-    paddingTop: 24,
+    paddingTop: 8,
     paddingBottom: 16,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    marginTop: 10
   },
   avatarWrap: {
     position: "relative" as const,
@@ -386,6 +508,8 @@ const styles = {
     fontSize: 20,
     fontWeight: "700" as const,
     color: "#222",
+    textAlign: "center" as const,
+    paddingHorizontal: 16,
   },
   roleChip: {
     marginTop: 8,
@@ -393,6 +517,7 @@ const styles = {
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
+    maxWidth: "100%" as const,
   },
   roleChipText: {
     color: "#57810d",
@@ -402,7 +527,7 @@ const styles = {
   },
   card: {
     backgroundColor: "#fff",
-    marginTop: 12,
+    marginTop: 10,
     marginHorizontal: 16,
     padding: 16,
     borderRadius: 12,
@@ -417,16 +542,6 @@ const styles = {
     letterSpacing: 0.5,
     marginBottom: 4,
   },
-  fullAddressLabel: {
-    fontSize: 12,
-    color: "#888",
-    marginBottom: 4,
-  },
-  fullAddress: {
-    fontSize: 14,
-    color: "#222",
-    lineHeight: 20,
-  },
   gridRow: {
     flexDirection: "row" as const,
     gap: 12,
@@ -434,5 +549,45 @@ const styles = {
   gridCol: {
     flex: 1,
     minWidth: 0,
+    maxWidth: "50%" as const,
+  },
+  loyaltyBanner: {
+    marginTop: 14,
+    marginHorizontal: -4,
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: "#57810d",
+  },
+  loyaltyBannerHeader: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    marginBottom: 4,
+  },
+  loyaltyBannerTitle: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "700" as const,
+    letterSpacing: 0.5,
+    textTransform: "uppercase" as const,
+  },
+  loyaltyIconWrap: {
+    width: 26,
+    height: 26,
+    borderRadius: 7,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    justifyContent: "center" as const,
+    alignItems: "center" as const,
+    marginRight: 8,
+  },
+  loyaltyValue: {
+    fontSize: 20,
+    fontWeight: "700" as const,
+    color: "#fff",
+    marginVertical: 2,
+  },
+  loyaltyHint: {
+    fontSize: 11,
+    color: "rgba(255,255,255,0.85)",
+    marginTop: 2,
   },
 };

@@ -26,6 +26,13 @@ export const authSlice = apiSlice.injectEndpoints({
         body: userData,
       }),
     }),
+    updateProfilePhoto: builder.mutation({
+      query: (profilephoto) => ({
+        url: "/auth/me/profile-image",
+        method: "PATCH",
+        body: profilephoto,
+      }),
+    })
   }),
   overrideExisting: true,
 });
@@ -35,4 +42,5 @@ export const {
   useUserRegisterMutation,
   useUserLoginOTPVerifyMutation,
   useResendOTPForRegisterdUserToLoginMutation,
+  useUpdateProfilePhotoMutation
 } = authSlice;
