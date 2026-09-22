@@ -74,7 +74,6 @@ export default function VerifyOtpPage({
         Login({ phone, otp: otpValue })
         .unwrap()
         .then(async (res) => {
-            console.log("OTP verification successful:", res);
             if(res?.status_code === 200 || res?.success) {
                 await saveToken(res?.token);
                 router.dismissAll();

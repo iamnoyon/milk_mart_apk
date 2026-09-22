@@ -101,12 +101,10 @@ export default function RegisterPage() {
       return;
     }
 
-    console.log("Registration Data:", form);
 
     try {
       const res = await userRegister(form).unwrap();
 
-      console.log("Registration Response:", res);
 
       if (res?.status_code === 201 || res?.success) {
         router.push({

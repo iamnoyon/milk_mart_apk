@@ -32,7 +32,6 @@ export default function LoginPage() {
             return;
         }
 
-        console.log("Phone:", phone);
         ResendOTP({ phone: phone })
             .unwrap()
             .then((res) => {

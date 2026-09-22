@@ -12,7 +12,6 @@ const SKELETON_COUNT = 8;
 export default function CategoriesIndex() {
   const theme = useTheme();
   const { data: categorylist, isLoading, refetch } = useGetCategoryListQuery({});
-  console.log(categorylist)
 
   const { refreshControl } = usePullToRefresh([refetch]);
 

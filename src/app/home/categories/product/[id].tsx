@@ -30,7 +30,6 @@ export default function ProductDetail() {
     { id },
     { skip: !id }
   );
-  console.log(productData)
 
   const { refreshControl } = usePullToRefresh([refetch]);
 

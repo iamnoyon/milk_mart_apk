@@ -68,7 +68,6 @@ export default function CartTab() {
         quantity: item.quantity,
       })),
     };
-    console.log(payload)
 
     try {
       const res: any = await ApplyCoupon(payload).unwrap();
