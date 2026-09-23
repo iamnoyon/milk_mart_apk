@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,8 +8,6 @@ import {
   Dimensions,
   Pressable,
   FlatList,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -22,8 +20,11 @@ import Skeleton from "@/components/Skeleton";
 import { addToCart } from "@/store/cart";
 import { useGetCategoryListQuery } from "@/store/admin/category"
 import { useGetProductListQuery } from "@/store/admin/products"
+import { Carousel } from "react-native-reanimated-carousel";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const BANNER_HEIGHT = 140;
+const BANNER_WIDTH = SCREEN_WIDTH - 32;
 
 const BANNERS = [
   { id: "1", title: "Fresh Milk Daily", subtitle: "Up to 20% off", color: "#092C0E" },
@@ -31,9 +32,7 @@ const BANNERS = [
   { id: "3", title: "Free Delivery", subtitle: "On orders over $50", color: "#2d7a38" },
 ];
 
-const NUM_COLUMNS = 2;
-const SKELETON_ROWS = 3;
-const SKELETON_COUNT = SKELETON_ROWS * NUM_COLUMNS;
+const SKELETON_COUNT = 4;
 
 
 export default function HomeTab() {
@@ -41,73 +40,46 @@ export default function HomeTab() {
   const dispatch = useDispatch();
   const [search, setSearch] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
-  const scrollRef = useRef<ScrollView>(null);
 
   const { data: categoryData, isLoading: categoryLoading, refetch: refetchCategories } = useGetCategoryListQuery({})
   const { data: productList, isLoading: productLoading, refetch: refetchProducts } = useGetProductListQuery({})
 
   const { refreshControl } = usePullToRefresh([refetchCategories, refetchProducts]);
 
-  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-    setActiveIndex(index);
-  };
-
-  const renderProduct = useCallback(({ item }: { item: any }) => (
-    <ProductCard
-      product={item}
-      variant="grid"
-      onPress={() => router.push(`/home/categories/product/${item.id}`)}
-      onAdd={() => dispatch(addToCart({
-        id: item.id,
-        name: item.name,
-        image: item.image,
-        price: item.price,
-        weight: item.weight,
-        weight_type: item.weight_type,
-      }))}
-    />
-  ), [dispatch]);
-
-  const renderSkeleton = useCallback(() => (
+  const renderBanner = useCallback(({ item }: { item: typeof BANNERS[number] }) => (
     <View
-      style={[
-        styles.productSkeleton,
-        {
-          backgroundColor: theme.background,
-          borderColor: theme.backgroundElement,
-        },
-      ]}
+      style={[styles.banner, { backgroundColor: item.color }]}
     >
-      <Skeleton width="100%" height={110} borderRadius={12} />
-      <Skeleton width="80%" height={14} borderRadius={4} style={{ marginTop: 10 }} />
-      <Skeleton width="50%" height={11} borderRadius={4} style={{ marginTop: 6 }} />
-      <View style={styles.skeletonBottomRow}>
-        <Skeleton width={60} height={15} borderRadius={4} />
-        <Skeleton width={30} height={30} borderRadius={8} />
-      </View>
+      <Text style={styles.bannerTitle}>{item.title}</Text>
+      <Text style={styles.bannerSubtitle}>{item.subtitle}</Text>
     </View>
-  ), [theme.background, theme.backgroundElement]);
+  ), []);
 
-  const flatData = productLoading
-    ? Array.from({ length: SKELETON_COUNT })
-    : productList?.data ?? [];
+  const handleAddToCart = useCallback((product: any) => {
+    dispatch(addToCart({
+      id: product.id,
+      name: product.name,
+      image: product.image,
+      price: product.price,
+      weight: product.weight,
+      weight_type: product.weight_type,
+    }));
+  }, [dispatch]);
 
-  const keyExtractor = useCallback((item: any, index: number) =>
-    productLoading ? `skeleton-${index}` : item.id.toString()
-  , [productLoading]);
+  const handleProductPress = useCallback((product: any) => {
+    router.push(`/home/categories/product/${product.id}`);
+  }, []);
 
   return (
     <FlatList
+      key="home-vertical"
       style={[styles.container, { backgroundColor: theme.background }]}
       contentContainerStyle={{ flexGrow: 1 }}
       refreshControl={refreshControl}
       showsVerticalScrollIndicator={false}
-      data={flatData}
-      keyExtractor={keyExtractor}
-      renderItem={productLoading ? renderSkeleton : renderProduct}
-      numColumns={NUM_COLUMNS}
-      columnWrapperStyle={styles.row}
+      scrollEnabled={false}
+      data={[]}
+      keyExtractor={(_, index) => `empty-${index}`}
       ListHeaderComponent={
         <View>
           {/* Search Bar */}
@@ -124,24 +96,15 @@ export default function HomeTab() {
 
           {/* Carousel */}
           <View style={styles.carouselContainer}>
-            <ScrollView
-              ref={scrollRef}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onScroll={onScroll}
-              scrollEventThrottle={16}
-            >
-              {BANNERS.map((banner) => (
-                <View
-                  key={banner.id}
-                  style={[styles.banner, { backgroundColor: banner.color }]}
-                >
-                  <Text style={styles.bannerTitle}>{banner.title}</Text>
-                  <Text style={styles.bannerSubtitle}>{banner.subtitle}</Text>
-                </View>
-              ))}
-            </ScrollView>
+            <Carousel
+              data={BANNERS}
+              renderItem={renderBanner}
+              loop
+              autoplay
+              autoplayInterval={4000}
+              onSnapToItem={(index) => setActiveIndex(index)}
+              style={{ width: SCREEN_WIDTH, height: BANNER_HEIGHT + 16 }}
+            />
 
             {/* Dots */}
             <View style={styles.dots}>
@@ -216,11 +179,49 @@ export default function HomeTab() {
               {(productList?.data?.length ?? 0) > 0 && (
                 <Pressable onPress={() => router.push("/home/categories/product")}>
                   <Text style={[styles.seeMore, { color: '#57810d' }]}>
-                    See more
+                    See All
                   </Text>
                 </Pressable>
               )}
             </View>
+
+            {/* Best Seller Horizontal Scroll */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.bestSellerList}
+            >
+              {productLoading
+                ? Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+                    <View
+                      key={`skeleton-${i}`}
+                      style={[
+                        styles.productSkeleton,
+                        {
+                          backgroundColor: theme.background,
+                          borderColor: theme.backgroundElement,
+                        },
+                      ]}
+                    >
+                      <Skeleton width="100%" height={110} borderRadius={12} />
+                      <Skeleton width="80%" height={14} borderRadius={4} style={{ marginTop: 10 }} />
+                      <Skeleton width="50%" height={11} borderRadius={4} style={{ marginTop: 6 }} />
+                      <View style={styles.skeletonBottomRow}>
+                        <Skeleton width={60} height={15} borderRadius={4} />
+                        <Skeleton width={30} height={30} borderRadius={8} />
+                      </View>
+                    </View>
+                  ))
+                : productList?.data?.map((product: any) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      variant="horizontal"
+                      onPress={() => handleProductPress(product)}
+                      onAdd={() => handleAddToCart(product)}
+                    />
+                  ))}
+            </ScrollView>
           </View>
         </View>
       }
@@ -275,11 +276,11 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   banner: {
-    width: SCREEN_WIDTH - 32,
+    width: BANNER_WIDTH,
     marginHorizontal: 16,
     borderRadius: 12,
     padding: 24,
-    height: 140,
+    height: BANNER_HEIGHT,
     justifyContent: "center",
   },
   bannerTitle: {
@@ -295,13 +296,13 @@ const styles = StyleSheet.create({
   dots: {
     flexDirection: "row",
     justifyContent: "center",
-    marginTop: 12,
-    gap: 6,
+    marginTop: 0,
+    gap: 5,
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   categoriesSection: {
     marginTop: 12,
@@ -330,12 +331,12 @@ const styles = StyleSheet.create({
   },
   bestSellerSection: {
     marginTop: 20,
-    paddingHorizontal: 16,
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    paddingHorizontal: 16,
     marginBottom: 12,
   },
   sectionTitle: {
@@ -346,17 +347,16 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
   },
-  row: {
-    justifyContent: "space-between",
+  bestSellerList: {
     paddingHorizontal: 16,
+    gap: 12,
   },
   productSkeleton: {
-    flex: 1,
+    width: 150,
     borderRadius: 12,
     padding: 10,
     borderWidth: 1,
-    marginBottom: 12,
-    maxWidth: "48%",
+    borderColor: "transparent",
   },
   skeletonBottomRow: {
     flexDirection: "row",
