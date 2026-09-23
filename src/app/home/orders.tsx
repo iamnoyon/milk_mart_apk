@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useTheme } from "@/hooks/use-theme";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { useGetMyOrdersQuery } from "@/store/admin/order";
 
@@ -31,6 +32,7 @@ function formatDate(iso?: string) {
 }
 
 export default function OrdersTab() {
+  const theme = useTheme();
   const { data, isLoading, refetch } = useGetMyOrdersQuery();
   const orders: any[] = Array.isArray(data?.data) ? data!.data : [];
 
@@ -44,13 +46,13 @@ export default function OrdersTab() {
         onPress={() => router.push(`/order/${item.id}`)}
         style={({ pressed }) => [
           styles.card,
-          { transform: [{ scale: pressed ? 0.99 : 1 }] },
+          { backgroundColor: theme.backgroundElement, transform: [{ scale: pressed ? 0.99 : 1 }] },
         ]}
       >
         <View style={styles.cardHeader}>
           <View>
-            <Text style={styles.orderLabel}>Order ID</Text>
-            <Text style={styles.orderNumber}>#{item.order_number}</Text>
+            <Text style={[styles.orderLabel, { color: theme.textSecondary }]}>Order ID</Text>
+            <Text style={[styles.orderNumber, { color: theme.text }]}>#{item.order_number}</Text>
           </View>
           <View style={[styles.statusBadge, { backgroundColor: colors.bg }]}>
             <Text style={[styles.statusText, { color: colors.fg }]}>
@@ -59,20 +61,27 @@ export default function OrdersTab() {
           </View>
         </View>
 
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: theme.backgroundSelected }]} />
 
         <View style={styles.cardFooter}>
           <View style={styles.metaItem}>
             <MaterialCommunityIcons
               name="calendar"
               size={14}
-              color="#60646C"
+              color={theme.textSecondary}
             />
-            <Text style={styles.metaText}>{formatDate(item.createdAt)}</Text>
+            <Text style={[styles.metaText, { color: theme.textSecondary }]}>{formatDate(item.createdAt)}</Text>
           </View>
-          <Text style={styles.totalPrice}>
-            ৳{Number(item.total_price ?? 0).toFixed(2)}
-          </Text>
+          <View style={styles.cardFooterRight}>
+            <Text style={[styles.totalPrice, { color: theme.tint }]}>
+              ৳{Number(item.total_price ?? 0).toFixed(2)}
+            </Text>
+            <MaterialCommunityIcons
+              name="chevron-right"
+              size={20}
+              color={theme.textSecondary}
+            />
+          </View>
         </View>
       </Pressable>
     );
@@ -101,10 +110,10 @@ export default function OrdersTab() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={["bottom"]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={["bottom"]}>
       <View style={styles.header}>
-        <Text style={styles.title}>My Orders</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, { color: theme.text }]}>My Orders</Text>
+        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
           {isLoading ? "Loading..." : `${orders.length} order${orders.length === 1 ? "" : "s"}`}
         </Text>
       </View>
@@ -138,11 +147,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "800",
-    color: "#000",
   },
   subtitle: {
     fontSize: 13,
-    color: "#60646C",
     marginTop: 2,
   },
   list: {
@@ -155,7 +162,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   card: {
-    backgroundColor: "#F0F0F3",
     borderRadius: 14,
     padding: 14,
     marginBottom: 12,
@@ -167,7 +173,6 @@ const styles = StyleSheet.create({
   },
   orderLabel: {
     fontSize: 11,
-    color: "#60646C",
     fontWeight: "600",
     letterSpacing: 0.4,
     marginBottom: 2,
@@ -175,7 +180,6 @@ const styles = StyleSheet.create({
   orderNumber: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#000",
   },
   statusBadge: {
     paddingHorizontal: 10,
@@ -189,13 +193,17 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: "#E0E1E6",
     marginVertical: 10,
   },
   cardFooter: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+  },
+  cardFooterRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   metaItem: {
     flexDirection: "row",
@@ -204,13 +212,12 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 13,
-    color: "#60646C",
   },
   totalPrice: {
     fontSize: 16,
     fontWeight: "800",
-    color: "#57810d",
   },
+
   center: {
     flex: 1,
     justifyContent: "center",
