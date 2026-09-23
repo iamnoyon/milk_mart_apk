@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { View, Text, StyleSheet, FlatList, Pressable, Modal } from "react-native";
 import { router } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -25,9 +25,12 @@ export default function ProductIndex() {
   const [trigger, { data: productsData, isFetching }] =
     useLazyGetProductsByCategoryIdQuery({});
 
-  const { refreshControl } = usePullToRefresh([() => trigger({ id: selectedCategory }, true)]);
+  const refreshProducts = useCallback(
+    () => trigger({ id: selectedCategory }, true),
+    [trigger, selectedCategory]
+  );
 
-  console.log(productsData)
+  const { refreshControl } = usePullToRefresh([refreshProducts]);
 
   useEffect(() => {
     trigger({ id: selectedCategory });

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   ScrollView,
   Dimensions,
   Pressable,
+  FlatList,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from "react-native";
@@ -30,6 +31,10 @@ const BANNERS = [
   { id: "3", title: "Free Delivery", subtitle: "On orders over $50", color: "#2d7a38" },
 ];
 
+const NUM_COLUMNS = 2;
+const SKELETON_ROWS = 3;
+const SKELETON_COUNT = SKELETON_ROWS * NUM_COLUMNS;
+
 
 export default function HomeTab() {
   const theme = useTheme();
@@ -48,187 +53,203 @@ export default function HomeTab() {
     setActiveIndex(index);
   };
 
+  const renderProduct = useCallback(({ item }: { item: any }) => (
+    <ProductCard
+      product={item}
+      variant="grid"
+      onPress={() => router.push(`/home/categories/product/${item.id}`)}
+      onAdd={() => dispatch(addToCart({
+        id: item.id,
+        name: item.name,
+        image: item.image,
+        price: item.price,
+        weight: item.weight,
+        weight_type: item.weight_type,
+      }))}
+    />
+  ), [dispatch]);
+
+  const renderSkeleton = useCallback(() => (
+    <View
+      style={[
+        styles.productSkeleton,
+        {
+          backgroundColor: theme.background,
+          borderColor: theme.backgroundElement,
+        },
+      ]}
+    >
+      <Skeleton width="100%" height={110} borderRadius={12} />
+      <Skeleton width="80%" height={14} borderRadius={4} style={{ marginTop: 10 }} />
+      <Skeleton width="50%" height={11} borderRadius={4} style={{ marginTop: 6 }} />
+      <View style={styles.skeletonBottomRow}>
+        <Skeleton width={60} height={15} borderRadius={4} />
+        <Skeleton width={30} height={30} borderRadius={8} />
+      </View>
+    </View>
+  ), [theme.background, theme.backgroundElement]);
+
+  const flatData = productLoading
+    ? Array.from({ length: SKELETON_COUNT })
+    : productList?.data ?? [];
+
+  const keyExtractor = useCallback((item: any, index: number) =>
+    productLoading ? `skeleton-${index}` : item.id.toString()
+  , [productLoading]);
+
   return (
-    <ScrollView
+    <FlatList
       style={[styles.container, { backgroundColor: theme.background }]}
       contentContainerStyle={{ flexGrow: 1 }}
       refreshControl={refreshControl}
-      scrollEnabled={false}
       showsVerticalScrollIndicator={false}
-    >
-      {/* Search Bar */}
-      <View style={[styles.searchBox, { backgroundColor: theme.backgroundElement }]}>
-        <MaterialCommunityIcons name="magnify" size={20} color={theme.textSecondary} />
-        <TextInput
-          placeholder="Search products..."
-          placeholderTextColor={theme.textSecondary}
-          value={search}
-          onChangeText={setSearch}
-          style={[styles.searchInput, { color: theme.text }]}
-        />
-      </View>
-
-      {/* Carousel */}
-      <View style={styles.carouselContainer}>
-        <ScrollView
-          ref={scrollRef}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onScroll={onScroll}
-          scrollEventThrottle={16}
-        >
-          {BANNERS.map((banner) => (
-            <View
-              key={banner.id}
-              style={[styles.banner, { backgroundColor: banner.color }]}
-            >
-              <Text style={styles.bannerTitle}>{banner.title}</Text>
-              <Text style={styles.bannerSubtitle}>{banner.subtitle}</Text>
-            </View>
-          ))}
-        </ScrollView>
-
-        {/* Dots */}
-        <View style={styles.dots}>
-          {BANNERS.map((_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.dot,
-                { backgroundColor: i === activeIndex ? theme.tint : theme.backgroundElement },
-              ]}
+      data={flatData}
+      keyExtractor={keyExtractor}
+      renderItem={productLoading ? renderSkeleton : renderProduct}
+      numColumns={NUM_COLUMNS}
+      columnWrapperStyle={styles.row}
+      ListHeaderComponent={
+        <View>
+          {/* Search Bar */}
+          <View style={[styles.searchBox, { backgroundColor: theme.backgroundElement }]}>
+            <MaterialCommunityIcons name="magnify" size={20} color={theme.textSecondary} />
+            <TextInput
+              placeholder="Search products..."
+              placeholderTextColor={theme.textSecondary}
+              value={search}
+              onChangeText={setSearch}
+              style={[styles.searchInput, { color: theme.text }]}
             />
-          ))}
-        </View>
-      </View>
-
-      {/* Categories Row */}
-      <View style={styles.categoriesSection}>
-        <View style={styles.categoryRow}>
-          {categoryLoading
-            ? Array.from({ length: 5 }).map((_, i) => (
-                <View key={i} style={styles.categoryItem}>
-                  <Skeleton width={48} height={48} borderRadius={14} />
-                  <Skeleton width={44} height={10} borderRadius={4} style={{ marginTop: 6 }} />
-                </View>
-              ))
-            : (() => {
-                const categories = categoryData?.data ?? [];
-                const visible = categories.slice(0, 4);
-                const hasMore = categories.length > 4;
-                return (
-                  <>
-                    {visible.map((cat) => (
-                      <Pressable
-                        key={cat.id}
-                        onPress={() => router.push({ pathname: `/home/categories/${cat.id}`, params: { name: cat.name } })}
-                        style={styles.categoryItem}
-                      >
-                        <View style={[styles.iconBg, { backgroundColor: '#e9f3d8' }]}>
-                          <MaterialCommunityIcons name={cat.icon as any} size={32} color='#4e7707' />
-                        </View>
-                        <Text style={[styles.categoryName, { color: theme.text }]} numberOfLines={1}>
-                          {cat.name}
-                        </Text>
-                      </Pressable>
-                    ))}
-                    {hasMore && (
-                      <Pressable
-                        key="more"
-                        onPress={() => router.push("/home/categories")}
-                        style={styles.categoryItem}
-                      >
-                        <View style={[styles.iconBg, { backgroundColor: '#e9f3d8' }]}>
-                          <MaterialCommunityIcons name="dots-grid" size={24} color='#4e7707' />
-                        </View>
-                        <Text style={[styles.categoryName, { color: theme.text }]} numberOfLines={1}>
-                          More
-                        </Text>
-                      </Pressable>
-                    )}
-                  </>
-                );
-              })()}
-        </View>
-      </View>
-
-      {/* Best Seller */}
-      <View style={styles.bestSellerSection}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>
-            Best Seller
-          </Text>
-          {(productList?.data?.length ?? 0) > 2 && (
-            <Pressable onPress={() => router.push("/home/categories/product")}>
-              <Text style={[styles.seeMore, { color: '#57810d' }]}>
-                See more
-              </Text>
-            </Pressable>
-          )}
-        </View>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.bestSellerList}
-        >
-          {productLoading
-            ? Array.from({ length: 4 }).map((_, i) => (
-                <View key={i} style={styles.productSkeleton}>
-                  <Skeleton width="100%" height={110} borderRadius={12} />
-                  <Skeleton width="80%" height={14} borderRadius={4} style={{ marginTop: 10 }} />
-                  <Skeleton width="50%" height={11} borderRadius={4} style={{ marginTop: 6 }} />
-                  <View style={styles.skeletonBottomRow}>
-                    <Skeleton width={60} height={15} borderRadius={4} />
-                    <Skeleton width={30} height={30} borderRadius={8} />
-                  </View>
-                </View>
-              ))
-            : productList?.data?.map((product: any) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  variant="horizontal"
-                  onPress={() => router.push(`/home/categories/product/${product.id}`)}
-                  onAdd={() => dispatch(addToCart({
-                    id: product.id,
-                    name: product.name,
-                    image: product.image,
-                    price: product.price,
-                    weight: product.weight,
-                    weight_type: product.weight_type,
-                  }))}
-                />
-              ))}
-        </ScrollView>
-      </View>
-
-      {/* Delivery Banner */}
-      <View style={styles.deliveryBannerSection}>
-        <View
-          style={[
-            styles.deliveryBanner,
-            { backgroundColor: '#e9f3d8' },
-          ]}
-        >
-          <View style={styles.deliveryTextWrap}>
-            <Text style={[styles.deliveryTitle, { color: '#57810d' }]}>
-              Free Delivery
-            </Text>
-            <Text style={[styles.deliverySubtitle, { color: theme.textSecondary }]}>
-              On orders over <Text style={{ fontWeight: "700" }}>৳500</Text>
-            </Text>
           </View>
 
-          <Image
-            source={require("@/assets/images/deliver-bike-svgrepo-com.svg")}
-            style={styles.deliveryImage}
-            contentFit="contain"
-          />
+          {/* Carousel */}
+          <View style={styles.carouselContainer}>
+            <ScrollView
+              ref={scrollRef}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onScroll={onScroll}
+              scrollEventThrottle={16}
+            >
+              {BANNERS.map((banner) => (
+                <View
+                  key={banner.id}
+                  style={[styles.banner, { backgroundColor: banner.color }]}
+                >
+                  <Text style={styles.bannerTitle}>{banner.title}</Text>
+                  <Text style={styles.bannerSubtitle}>{banner.subtitle}</Text>
+                </View>
+              ))}
+            </ScrollView>
+
+            {/* Dots */}
+            <View style={styles.dots}>
+              {BANNERS.map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.dot,
+                    { backgroundColor: i === activeIndex ? theme.tint : theme.backgroundElement },
+                  ]}
+                />
+              ))}
+            </View>
+          </View>
+
+          {/* Categories Row */}
+          <View style={styles.categoriesSection}>
+            <View style={styles.categoryRow}>
+              {categoryLoading
+                ? Array.from({ length: 5 }).map((_, i) => (
+                    <View key={i} style={styles.categoryItem}>
+                      <Skeleton width={48} height={48} borderRadius={14} />
+                      <Skeleton width={44} height={10} borderRadius={4} style={{ marginTop: 6 }} />
+                    </View>
+                  ))
+                : (() => {
+                    const categories = categoryData?.data ?? [];
+                    const hasMore = categories.length > 5;
+                    const visible = hasMore ? categories.slice(0, 4) : categories;
+                    return (
+                      <>
+                        {visible.map((cat) => (
+                          <Pressable
+                            key={cat.id}
+                            onPress={() => router.push({ pathname: `/home/categories/${cat.id}`, params: { name: cat.name } })}
+                            style={styles.categoryItem}
+                          >
+                            <View style={[styles.iconBg, { backgroundColor: '#e9f3d8' }]}>
+                              <MaterialCommunityIcons name={cat.icon as any} size={32} color='#4e7707' />
+                            </View>
+                            <Text style={[styles.categoryName, { color: theme.text }]} numberOfLines={1}>
+                              {cat.name}
+                            </Text>
+                          </Pressable>
+                        ))}
+                        {hasMore && (
+                          <Pressable
+                            key="more"
+                            onPress={() => router.push("/home/categories")}
+                            style={styles.categoryItem}
+                          >
+                            <View style={[styles.iconBg, { backgroundColor: '#e9f3d8' }]}>
+                              <MaterialCommunityIcons name="dots-grid" size={24} color='#4e7707' />
+                            </View>
+                            <Text style={[styles.categoryName, { color: theme.text }]} numberOfLines={1}>
+                              More
+                            </Text>
+                          </Pressable>
+                        )}
+                      </>
+                    );
+                  })()}
+            </View>
+          </View>
+
+          {/* Best Seller Header */}
+          <View style={styles.bestSellerSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>
+                Best Seller
+              </Text>
+              {(productList?.data?.length ?? 0) > 0 && (
+                <Pressable onPress={() => router.push("/home/categories/product")}>
+                  <Text style={[styles.seeMore, { color: '#57810d' }]}>
+                    See more
+                  </Text>
+                </Pressable>
+              )}
+            </View>
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      }
+      ListFooterComponent={
+        <View style={styles.deliveryBannerSection}>
+          <View
+            style={[
+              styles.deliveryBanner,
+              { backgroundColor: '#e9f3d8' },
+            ]}
+          >
+            <View style={styles.deliveryTextWrap}>
+              <Text style={[styles.deliveryTitle, { color: '#57810d' }]}>
+                Free Delivery
+              </Text>
+              <Text style={[styles.deliverySubtitle, { color: theme.textSecondary }]}>
+                On orders over <Text style={{ fontWeight: "700" }}>৳500</Text>
+              </Text>
+            </View>
+
+            <Image
+              source={require("@/assets/images/deliver-bike-svgrepo-com.svg")}
+              style={styles.deliveryImage}
+              contentFit="contain"
+            />
+          </View>
+        </View>
+      }
+    />
   );
 }
 
@@ -309,12 +330,12 @@ const styles = StyleSheet.create({
   },
   bestSellerSection: {
     marginTop: 20,
+    paddingHorizontal: 16,
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
     marginBottom: 12,
   },
   sectionTitle: {
@@ -325,16 +346,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
   },
-  bestSellerList: {
+  row: {
+    justifyContent: "space-between",
     paddingHorizontal: 16,
-    gap: 12,
   },
   productSkeleton: {
-    width: 150,
+    flex: 1,
     borderRadius: 12,
     padding: 10,
     borderWidth: 1,
-    borderColor: "transparent",
+    marginBottom: 12,
+    maxWidth: "48%",
   },
   skeletonBottomRow: {
     flexDirection: "row",

@@ -31,7 +31,7 @@ function formatDate(iso?: string) {
 }
 
 export default function OrdersTab() {
-  const { data, isLoading, isError, refetch, error } = useGetMyOrdersQuery();
+  const { data, isLoading, refetch } = useGetMyOrdersQuery();
   const orders: any[] = Array.isArray(data?.data) ? data!.data : [];
 
   const { refreshControl } = usePullToRefresh([refetch]);
@@ -82,18 +82,6 @@ export default function OrdersTab() {
     <View style={styles.center}>
       {isLoading ? (
         <ActivityIndicator size="large" color="#57810d" />
-      ) : isError ? (
-        <>
-          <MaterialCommunityIcons
-            name="alert-circle-outline"
-            size={56}
-            color="#e53935"
-          />
-          <Text style={styles.errorTitle}>Couldn't load orders</Text>
-          <Pressable style={styles.retryBtn} onPress={() => refetch()}>
-            <Text style={styles.retryText}>Retry</Text>
-          </Pressable>
-        </>
       ) : (
         <>
           <View style={styles.emptyIcon}>
@@ -229,24 +217,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 24,
     gap: 10,
-  },
-  errorTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#000",
-    marginTop: 6,
-  },
-  retryBtn: {
-    marginTop: 8,
-    backgroundColor: "#57810d",
-    paddingHorizontal: 22,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  retryText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "700",
   },
   emptyIcon: {
     width: 110,
