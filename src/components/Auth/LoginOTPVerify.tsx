@@ -1,8 +1,10 @@
 import { useUserLoginOTPVerifyMutation } from "@/store/auth";
+import { setToken } from "@/store/user";
 import { saveToken } from "@/utils/authStorage";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
+import { useDispatch } from "react-redux";
 import {
   Text,
   TextInput,
@@ -33,6 +35,7 @@ export default function VerifyOtpPage({
     const [Login, {data: loginRes, isLoading}] = useUserLoginOTPVerifyMutation();
 
     const inputRefs = useRef<(TextInput | null)[]>([]);
+    const dispatch = useDispatch();
 
     useEffect(() => {
         if (resendTimer <= 0) return;
@@ -76,6 +79,7 @@ export default function VerifyOtpPage({
         .then(async (res) => {
             if(res?.status_code === 200 || res?.success) {
                 await saveToken(res?.token);
+                dispatch(setToken(res?.token));
                 router.dismissAll();
                 router.replace("/home");
                 Toast.show({
@@ -95,7 +99,6 @@ export default function VerifyOtpPage({
             console.log("OTP verification failed:", error);
             // Handle error (e.g., show a message to the user)
         });
-        onVerify?.(otpValue);
     };
 
     const handleResend = () => {
