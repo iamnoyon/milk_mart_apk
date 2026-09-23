@@ -241,7 +241,7 @@ export default function OrderDetailsScreen() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.itemName}>
-                      Product #{item.product_id}
+                      {item.product_name}
                     </Text>
                     <Text style={styles.itemMeta}>
                       Qty {item.quantity} · ৳{Number(item.price).toFixed(2)} each

@@ -23,13 +23,13 @@ import { useGetProductListQuery } from "@/store/admin/products"
 import { Carousel } from "react-native-reanimated-carousel";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const BANNER_HEIGHT = 140;
+const BANNER_HEIGHT = 150;
 const BANNER_WIDTH = SCREEN_WIDTH - 32;
 
 const BANNERS = [
-  { id: "1", title: "Fresh Milk Daily", subtitle: "Up to 20% off", color: "#092C0E" },
-  { id: "2", title: "New Arrivals", subtitle: "Check it out", color: "#1a5c24" },
-  { id: "3", title: "Free Delivery", subtitle: "On orders over $50", color: "#2d7a38" },
+  { id: "1", title: "Fresh Milk Daily", subtitle: "Up to 20% off", color: "#092C0E", url: 'https://res.cloudinary.com/l0jhrvez/image/upload/v1790153633/uploads/doglpjo9drslrbegsgbc.jpg' },
+  { id: "2", title: "New Arrivals", subtitle: "Check it out", color: "#1a5c24", url: 'https://res.cloudinary.com/l0jhrvez/image/upload/v1790153712/uploads/lbtvftaiuw4lta95xgle.jpg' },
+  { id: "3", title: "Free Delivery", subtitle: "On orders over $50", color: "#2d7a38", url: 'https://res.cloudinary.com/l0jhrvez/image/upload/v1790153784/uploads/u2bpzpvexso0z8bvogjl.jpg' },
 ];
 
 const SKELETON_COUNT = 4;
@@ -47,11 +47,16 @@ export default function HomeTab() {
   const { refreshControl } = usePullToRefresh([refetchCategories, refetchProducts]);
 
   const renderBanner = useCallback(({ item }: { item: typeof BANNERS[number] }) => (
-    <View
-      style={[styles.banner, { backgroundColor: item.color }]}
-    >
-      <Text style={styles.bannerTitle}>{item.title}</Text>
-      <Text style={styles.bannerSubtitle}>{item.subtitle}</Text>
+    <View style={styles.banner}>
+      <Image
+        source={{ uri: item.url }}
+        style={StyleSheet.absoluteFill}
+        contentFit="cover"
+      />
+      <View style={styles.bannerContent}>
+        <Text style={styles.bannerTitle}>{item.title}</Text>
+        <Text style={styles.bannerSubtitle}>{item.subtitle}</Text>
+      </View>
     </View>
   ), []);
 
@@ -279,19 +284,24 @@ const styles = StyleSheet.create({
     width: BANNER_WIDTH,
     marginHorizontal: 16,
     borderRadius: 12,
-    padding: 24,
     height: BANNER_HEIGHT,
+    overflow: "hidden",
     justifyContent: "center",
+  },
+  bannerContent: {
+    padding: 24,
+    zIndex: 1,
   },
   bannerTitle: {
     color: "#fff",
     fontSize: 22,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   bannerSubtitle: {
-    color: "#ddd",
+    color: "#fff",
     fontSize: 14,
     marginTop: 4,
+    fontWeight: "500",
   },
   dots: {
     flexDirection: "row",
