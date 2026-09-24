@@ -16,6 +16,7 @@ import {
   clearUser,
 } from "@/store/user";
 import { clearCart } from "@/store/cart";
+import { app_config } from "@/config/config";
 
 const TOKEN_KEY = "access_token";
 
@@ -61,7 +62,7 @@ export function AuthProvider({
         dispatch(setToken(storedToken));
 
         try {
-          const response = await fetch(`https://fmd-6pes.onrender.com/auth/me`, {
+          const response = await fetch(`${app_config.BACKEND_API}/auth/me`, {
             method: "GET",
             headers: {
               Authorization: `Bearer ${storedToken}`,

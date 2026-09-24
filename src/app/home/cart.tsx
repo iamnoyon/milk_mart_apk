@@ -251,38 +251,47 @@ export default function CartTab() {
             </Pressable>
           </View>
         ) : (
-          <View
-            style={[
-              styles.couponField,
-              { backgroundColor: theme.backgroundElement },
-            ]}
-          >
-            <MaterialCommunityIcons
-              name="ticket-percent-outline"
-              size={18}
-              color={theme.textSecondary}
-            />
-            <TextInput
-              value={couponCode}
-              onChangeText={setCouponCode}
-              placeholder="Enter coupon code"
-              placeholderTextColor={theme.textSecondary}
-              autoCapitalize="characters"
-              style={[styles.couponInput, { color: theme.text }]}
-              returnKeyType="done"
-            />
-            <Pressable
-              onPress={handleApplyCoupon}
-              disabled={applyCouponeLoading}
-              style={({ pressed }) => [
-                styles.applyBtn,
-                { opacity: applyCouponeLoading || pressed ? 0.6 : 1 },
+          <View style={styles.couponWrapper}>
+            <Text style={[styles.couponLabel, { color: theme.textSecondary }]}>
+              Have a coupon?
+            </Text>
+            <View
+              style={[
+                styles.couponField,
+                {
+                  backgroundColor: theme.backgroundElement,
+                  borderColor: theme.backgroundSelected,
+                },
               ]}
             >
-              <Text style={styles.applyBtnText}>
-                {applyCouponeLoading ? "Applying..." : "Apply Coupon"}
-              </Text>
-            </Pressable>
+              <MaterialCommunityIcons
+                name="ticket-percent-outline"
+                size={20}
+                color={theme.textSecondary}
+              />
+              <TextInput
+                value={couponCode}
+                onChangeText={setCouponCode}
+                placeholder="Enter coupon code"
+                placeholderTextColor={theme.textSecondary}
+                autoCapitalize="characters"
+                style={[styles.couponInput, { color: theme.text }]}
+                returnKeyType="done"
+                onSubmitEditing={handleApplyCoupon}
+              />
+              <Pressable
+                onPress={handleApplyCoupon}
+                disabled={applyCouponeLoading}
+                style={({ pressed }) => [
+                  styles.applyBtn,
+                  { opacity: applyCouponeLoading || pressed ? 0.6 : 1 },
+                ]}
+              >
+                <Text style={styles.applyBtnText}>
+                  {applyCouponeLoading ? "Applying..." : "Apply"}
+                </Text>
+              </Pressable>
+            </View>
           </View>
         )}
 
@@ -450,29 +459,36 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     gap: 4,
   },
+  couponWrapper: {
+    width: "100%",
+    marginBottom: 6,
+    gap: 6,
+  },
   couponField: {
     flexDirection: "row",
     alignItems: "center",
-    height: 46,
-    borderRadius: 6,
-    paddingLeft: 12,
-    paddingRight: 4,
-    gap: 8,
+    height: 52,
+    borderRadius: 12,
+    paddingLeft: 14,
+    paddingRight: 6,
+    gap: 10,
+    borderWidth: 1,
   },
   couponInput: {
     flex: 1,
     height: "100%",
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "600",
     paddingVertical: 0,
   },
   applyBtn: {
     backgroundColor: "#57810d",
-    paddingHorizontal: 16,
-    height: 38,
-    borderRadius: 5,
+    paddingHorizontal: 18,
+    height: 40,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
+    minWidth: 90,
   },
   applyBtnText: {
     color: "#fff",

@@ -11,6 +11,8 @@ import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { useDispatch, useSelector } from "react-redux";
+import { resolveAreaLabel } from "@/utils/areas";
+import { app_config } from "@/config/config";
 
 interface UserData {
   area?: string;
@@ -164,6 +166,7 @@ export default function ProfileTab() {
     state?.name ??
     "";
   const phone = profile.phone ?? "";
+  const areaLabel = resolveAreaLabel(profile.area) ?? "";
   const role =
     profile.role ??
     (profileResponse as any)?.role ??
@@ -237,7 +240,7 @@ export default function ProfileTab() {
       } = await new Promise((resolve, reject) => {
         xhr.open(
           "POST",
-          "https://fmd-6pes.onrender.com/upload/?folder=uploads"
+          `${app_config.BACKEND_API}/upload/?folder=uploads`
         );
         if (token) {
           xhr.setRequestHeader("Authorization", `Bearer ${token}`);
@@ -378,7 +381,7 @@ export default function ProfileTab() {
           <InfoRow icon="phone" label="Phone" value={phone} />
           <View style={styles.gridRow}>
             <View style={styles.gridCol}>
-              <InfoRow icon="home-city" label="Area" value={profile.area} compact />
+              <InfoRow icon="home-city" label="Area" value={areaLabel} compact />
             </View>
             <View style={styles.gridCol}>
               <InfoRow icon="road" label="Road" value={profile.road} compact />

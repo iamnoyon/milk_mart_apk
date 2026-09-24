@@ -1,8 +1,8 @@
+import { app_config } from "@/config/config";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
- // https://fmd-6pes.onrender.com
- //http://192.168.30.88:8000
+
 const baseQuery = fetchBaseQuery({
-  baseUrl: 'https://fmd-6pes.onrender.com',
+  baseUrl: app_config.BACKEND_API,
   credentials: "include",
   prepareHeaders: (headers, { getState }) => {
     const token = getState()?.user?.token;

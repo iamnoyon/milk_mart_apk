@@ -12,15 +12,32 @@ import { useSelector, useDispatch } from "react-redux";
 import Toast from "react-native-toast-message";
 import { useTheme } from "@/hooks/use-theme";
 import { usePlaceOrderMutation } from "@/store/admin/order";
+import { useGetProfileQuery } from "@/store/auth";
 import { clearCart } from "@/store/cart";
+import { resolveAreaLabel } from "@/utils/areas";
 
 const DELIVERY_FEE = 50;
 
-const ADDRESS = {
-  name: "Noyon Sarker",
-  phone: "01889010237",
-  lines: ["House 15, Road 10, Avenue B", "Mirpur DOSH"],
-};
+interface UserState {
+  email?: string;
+  id?: number | string;
+  name?: string;
+  profile_image?: string;
+  role?: string;
+  data?: {
+    area?: string;
+    avenue?: string;
+    flat?: string;
+    house?: string;
+    id?: number | string;
+    name?: string;
+    phone?: string;
+    road?: string;
+    role?: string;
+    verified?: boolean;
+  };
+  token?: string;
+}
 
 export default function CheckoutScreen() {
   const theme = useTheme();
@@ -31,7 +48,42 @@ export default function CheckoutScreen() {
     final_price?: string;
   }>();
 
+  const { data: profileResponse } = useGetProfileQuery();
+  const userState = useSelector(
+    (state: { user?: UserState }) => state.user
+  );
+
   const [PlaceOrder, { isLoading: placeOrderLoading }] = usePlaceOrderMutation();
+
+  const profile = (profileResponse as any)?.data ?? userState?.data ?? {};
+  const fullName =
+    profile.name ??
+    (profileResponse as any)?.name ??
+    userState?.name ??
+    "";
+  const phone = profile.phone ?? "";
+  const areaDisplay = resolveAreaLabel(profile.area);
+  const addressSegments = [
+    { label: "Flat", value: profile.flat },
+    { label: "House", value: profile.house },
+    { label: "Road", value: profile.road },
+    { label: "Avenue", value: profile.avenue },
+    { label: "Area", value: areaDisplay },
+  ].filter(
+    (seg) => seg.value && String(seg.value).trim().length > 0
+  );
+  const formatLine = (segments: { label: string; value?: string | null }[]) =>
+    segments.map((seg) => `${seg.label} ${seg.value}`).join(", ");
+
+  const roadIndex = addressSegments.findIndex(
+    (seg) => seg.label.toLowerCase() === "road"
+  );
+  const firstSegments =
+    roadIndex >= 0 ? addressSegments.slice(0, roadIndex + 1) : addressSegments;
+  const secondSegments =
+    roadIndex >= 0 ? addressSegments.slice(roadIndex + 1) : [];
+  const addressLine1 = firstSegments.length ? formatLine(firstSegments) : "";
+  const addressLine2 = secondSegments.length ? formatLine(secondSegments) : "";
 
   const rawSubtotal = items.reduce(
     (sum: number, item: any) => sum + item.price * item.quantity,
@@ -133,10 +185,10 @@ export default function CheckoutScreen() {
           <View style={styles.addressHeader}>
             <View style={{ flex: 1 }}>
               <Text style={[styles.addressName, { color: theme.text }]}>
-                {ADDRESS.name}
+                {fullName || "—"}
               </Text>
               <Text style={[styles.addressPhone, { color: theme.textSecondary }]}>
-                {ADDRESS.phone}
+                {phone || "—"}
               </Text>
             </View>
           </View>
@@ -146,14 +198,6 @@ export default function CheckoutScreen() {
               { backgroundColor: theme.backgroundSelected },
             ]}
           />
-          {ADDRESS.lines.map((line, idx) => (
-            <Text
-              key={idx}
-              style={[styles.addressLine, { color: theme.text }]}
-            >
-              {line}
-            </Text>
-          ))}
           <View style={styles.addressFooter}>
             <MaterialCommunityIcons
               name="map-marker"
@@ -162,6 +206,31 @@ export default function CheckoutScreen() {
             />
             <Text style={styles.addressFooterText}>Delivery address</Text>
           </View>
+          {addressLine1 || addressLine2 ? (
+            <>
+              {addressLine1 ? (
+                <Text
+                  style={[styles.addressLine, { color: theme.text }]}
+                >
+                  {addressLine1}
+                </Text>
+              ) : null}
+              {addressLine2 ? (
+                <Text
+                  style={[styles.addressLine, { color: theme.text }]}
+                >
+                  {addressLine2}
+                </Text>
+              ) : null}
+            </>
+          ) : (
+            <Text
+              style={[styles.addressLine, { color: theme.textSecondary }]}
+            >
+              No address on file
+            </Text>
+          )}
+          
         </View>
 
         <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>
@@ -346,7 +415,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     gap: 6,
-    marginTop: 6,
   },
   addressFooterText: {
     fontSize: 12,
